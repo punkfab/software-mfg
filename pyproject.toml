@@ -1,0 +1,14 @@
+[project]
+name = "software-mfg"
+version = "0.0.0"
+description = "Software-defined manufacturing & assembly — a harness that builds physical harnesses."
+requires-python = ">=3.12"
+dependencies = [
+    "build123d==0.10.0",
+    "mujoco==3.9.0",
+    "partcad==0.7.135",
+    "rich_click",      # partcad import dep, not pulled in automatically by its wheel
+]
+
+[tool.uv]
+package = false
