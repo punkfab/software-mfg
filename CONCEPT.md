@@ -46,6 +46,11 @@ with sparse, expensive physical confirmation and human-assisted builds.
 5. **The operation graph is the program.** Manufacturing = a DAG of operations
    over resources. Optimizing that graph (sequencing, parallelism, part
    consolidation) is the real "software-defined" payload.
+6. **Compose cells, don't fork them.** A machine that already exists as its own
+   parts-as-code repo (e.g. the wire bender) is consumed *by reference*: the
+   orchestrator invokes the cell's own toolchain to emit geometry/behavior. The
+   cell stays the single source of truth and is never modified by software-mfg
+   (sync leaves no artifacts in the cell tree).
 
 ## 4. System architecture — the format/software stack
 
@@ -74,7 +79,15 @@ Format notes:
   OpenSCAD/STEP, composed into assemblies with positions, versioned, importable
   like dependencies. This dependency graph is the substrate an agent mutates
   when it merges parts or swaps a variant. The existing bend-disc variant family
-  (swept `PIN_OFFSET` / `MANDREL_D`) is already a partcad-shaped problem.
+  (swept `PIN_OFFSET` / `MANDREL_D`) is already a partcad-shaped problem. It is
+  the *intended* registry layer; standing up its sandboxed runtime is deferred
+  (see PLAN.md). Until then, cells are composed by the lightweight bridge below.
+- **Cells composed by reference (`cells.yaml` + `scripts/sync_cells.py`).** An
+  external machine repo (the wire bender) is declared as a *cell*; sync invokes
+  the cell's own interpreter on its own CAD to emit STEP/STL into
+  `exports/cells/`, then re-imports the STEP under our build123d as an integrity
+  gate. The cell repo is never written to. This is the working stand-in for the
+  partcad registry and embodies principle #6.
 
 ## 5. Hardware concepts
 

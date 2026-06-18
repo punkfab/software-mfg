@@ -20,12 +20,13 @@ and corrects the simulator's lies. Everything — parts, assemblies, process ste
 ## Layout
 
 ```
-parts/         # build123d part scripts (each exposes a module-level `part`)
+parts/         # build123d part scripts authored here (each exposes `part`)
 assemblies/    # partcad assemblies-as-code (composition + positions)
 sim/           # MuJoCo MJCF models + scenes
 orchestration/ # operation-graph + scheduler (later phases)
-scripts/       # tooling — e.g. check_parts.py (regenerate + validate geometry)
-exports/       # generated STEP / STL / 3MF (gitignored)
+scripts/       # check_parts.py (local parts) + sync_cells.py (external cells)
+exports/       # generated STEP / STL / 3MF (gitignored); cells/ for cell output
+cells.yaml     # external machine cells composed by reference (e.g. ../wirebender)
 ```
 
 ## Setup
@@ -33,9 +34,18 @@ exports/       # generated STEP / STL / 3MF (gitignored)
 build123d and mujoco are the core deps. With `uv`:
 
 ```bash
-uv sync                       # or: pip install -e .
-python scripts/check_parts.py # regenerate + validate every part -> exports/
+uv sync                        # or: pip install -e .
+python scripts/check_parts.py  # regenerate + validate local parts -> exports/
+python scripts/sync_cells.py   # pull geometry from external cells -> exports/cells/
 ```
+
+## Composing cells (don't fork them)
+
+A machine that already lives as its own parts-as-code repo (the wire bender at
+`../wirebender`) is consumed **by reference**, declared in `cells.yaml`.
+`sync_cells.py` invokes the cell's *own* interpreter/CAD to emit STEP+STL, then
+re-imports the STEP here as an integrity gate. The cell repo is the single source
+of truth and is **never modified** (sync writes no bytecode into it).
 
 Recorded toolchain (Phase 0): Python 3.12.9, build123d 0.10.0, mujoco 3.9.0,
 partcad 0.7.135.

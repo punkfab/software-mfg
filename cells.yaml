@@ -1,0 +1,25 @@
+# External manufacturing cells — composed by reference, never forked.
+#
+# software-mfg is the orchestration layer. It does not copy a cell's CAD source;
+# it invokes the cell's OWN toolchain (its interpreter + its parametric scripts)
+# to emit geometry on demand. The cell repo stays the single source of truth, so
+# upstream design changes flow through automatically.
+#
+# This is the working bridge today. partcad (a versioned package graph over the
+# same idea) is the intended formalization once its runtime is stood up — see
+# PLAN.md, "partcad as the registry layer".
+#
+# Each part declares the builder function to call inside the cell. sync_cells.py
+# runs it under the cell's python and writes STEP + STL to exports/cells/<cell>/,
+# then re-imports the STEP under software-mfg's own build123d as an integrity gate.
+
+cells:
+  wirebender:
+    path: ../wirebender          # sibling repo: the wire-bender cell (CAD + MuJoCo sim + slicer)
+    python: py/bin/python        # the cell's own venv interpreter (authoritative)
+    syspath: [".", "cad"]        # prepended so the cell's cross-imports (e.g. arbor_mount) resolve
+    parts:
+      bend_disc:
+        module: cad.bend_disc
+        builder: bend_disc       # function -> build123d solid
+        note: bend-pin disc bolted to the rotating arbor; outer-pin radius + mandrel swept per wire size

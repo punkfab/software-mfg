@@ -35,7 +35,8 @@ def validate(obj) -> list[str]:
         problems.append(f"expected 1 solid, got {len(solids)}")
     if obj.volume <= 0:
         problems.append(f"non-positive volume {obj.volume:.3f}")
-    if hasattr(obj, "is_valid") and not obj.is_valid():
+    iv = getattr(obj, "is_valid", True)         # bool in some build123d builds, callable in others
+    if not (iv() if callable(iv) else iv):
         problems.append("OCC reports invalid geometry")
     return problems
 

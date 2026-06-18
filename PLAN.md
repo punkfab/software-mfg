@@ -15,20 +15,43 @@ one honest vertical slice through every layer *before* scaling breadth.
 
 Goal: a working, versioned project that can define a part and open it in sim.
 
-- [ ] Initialize git repo; commit `CONCEPT.md` + `PLAN.md`.
-- [ ] Project layout:
+- [x] Initialize git repo; commit `CONCEPT.md` + `PLAN.md`.
+- [x] Project layout:
   ```
-  parts/        # build123d part scripts (e.g. bend_disc.py, shear mounts)
-  assemblies/   # partcad assembly definitions (assemblies-as-code)
+  parts/        # build123d part scripts authored HERE (each exposes `part`)
+  assemblies/   # partcad assemblies-as-code (later phases)
   sim/          # MuJoCo MJCF models + scenes
   orchestration/# operation-graph + scheduler (later phases)
-  exports/      # generated STEP / 3MF / STL (gitignored or LFS)
+  scripts/      # check_parts.py (local parts) + sync_cells.py (external cells)
+  exports/      # generated STEP / 3MF / STL (gitignored); cells/ for cell output
+  cells.yaml    # external cells composed by reference (see below)
   ```
-- [ ] Pin toolchain: Python env, `build123d`, `partcad`, `mujoco`. Record versions.
-- [ ] Migrate existing `bend_disc.py` variant family into `parts/`; declare it as
-      a partcad package (first dependency-graph node).
-- [ ] CI/check: a script that regenerates STEP/STL from each part script
-      (catches geometry regressions; watertight check).
+- [x] Pin toolchain: Python 3.12.9, build123d 0.10.0, mujoco 3.9.0, partcad 0.7.135
+      (+ rich_click). Recorded in `pyproject.toml` / `README.md`.
+- [x] CI/check: `scripts/check_parts.py` regenerates STEP/STL from each local part
+      and gates on single-watertight-solid + positive volume.
+
+### Compose the wire bender, don't fork it
+
+The wire bender is its own mature repo (`../wirebender`: CAD + MuJoCo sim +
+slicer). So `bend_disc` is **not** migrated into `parts/` — that would fork it.
+Instead software-mfg treats wirebender as an **external cell composed by
+reference**:
+
+- [x] `cells.yaml` declares cell parts (path, the cell's own interpreter, builder fn).
+- [x] `scripts/sync_cells.py` invokes the cell's **own** toolchain to emit
+      STEP/STL into `exports/cells/<cell>/`, then re-imports the STEP under our
+      build123d as an integrity gate. Verified: `wirebender/bend_disc` → valid
+      single solid, 8257 mm³.
+- [x] **Constraint: never modify a cell repo.** The cell stays the single source
+      of truth; sync runs with `PYTHONDONTWRITEBYTECODE=1` so it leaves no
+      artifacts (not even `__pycache__`) in the cell tree.
+
+- [ ] **partcad as the registry layer (deferred).** partcad is the intended
+      formalization (versioned package graph over the same parts). Blocked: its
+      runtime wants an isolated Python 3.11 sandbox with CAD deps pip-installed,
+      which isn't present here. Revisit to publish wirebender as a partcad
+      package once that runtime is stood up.
 
 ## Phase 1 — SO-101 in simulation
 
