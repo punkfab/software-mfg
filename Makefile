@@ -6,13 +6,16 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell clean
 .DEFAULT_GOAL := help
 
-sim: ## run the SO-101 in the live interactive viewer (needs a display; run via `!`)
+sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
 	DISPLAY=$(DISPLAY) $(PY) -m mujoco.viewer --mjcf sim/so101/scene.xml
 
-view: sim ## alias for `sim`
+printer-sim: ## live viewer: the P1S PRINTER cell, looping the eject sequence (run via `!`)
+	DISPLAY=$(DISPLAY) $(PY) scripts/printer_view.py
+
+view: sim ## alias for `sim` (the arm)
 
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
