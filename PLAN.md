@@ -57,11 +57,18 @@ reference**:
 
 Goal: a controllable SO-101 in MuJoCo.
 
-- [ ] Obtain/verify SO-101 MJCF (LeRobot ecosystem); import into `sim/`.
-- [ ] Stand up a basic scene (arm + table + a fiducial/datum).
-- [ ] Validate forward/inverse kinematics; scripted joint moves.
-- [ ] Decide control interface (direct joint targets vs. IK helper) for later
-      orchestration to drive.
+- [x] Obtain/verify SO-101 MJCF; import into `sim/`. **Official MJCF exists** —
+      `TheRobotStudio/SO-ARM100` ships `Simulation/SO101/` (Apache-2.0). Vendored
+      a pinned snapshot to `sim/so101/` (commit `aec17bb`; see `PROVENANCE.md`).
+      6 DOF: shoulder_pan/lift, elbow_flex, wrist_flex/roll, gripper.
+- [x] Validate FK + scripted joint moves. `scripts/so101_check.py` compiles the
+      scene, runs a position-control move, confirms tracking (0.000 rad err) and
+      end-effector motion (0.265 m). Gates the vendored model.
+- [x] Decide control interface: **position actuators** (STS3215 class, kp≈998);
+      `data.ctrl[:] = desired joint angles (rad)`. Orchestration drives this.
+- [ ] Workcell scene (arm + table + fiducial/datum). Compose from the *outside*
+      (MjSpec API or an `<include>` wrapper) — do NOT edit the vendored snapshot.
+- [ ] IK helper (currently FK only); add when placement needs Cartesian targets.
 
 ## Phase 2 — Tool changer + self-actuated shear (sim)
 
