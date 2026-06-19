@@ -120,27 +120,41 @@ loop. Decisions: **P1S (enclosed)**, **eject-in-place** removal (cool → open d
 > tool-change and one cut on a simulated wire from the bender — driven by a
 > 3-node operation graph (form → present → shear).**
 
-- [ ] Minimal simulated wire (deformable or segmented proxy) emerging from a
-      stand-in bender.
-- [ ] 3-node operation graph: `form → present → shear`, with precedence + a
-      timing handoff between bender and arm.
-- [ ] Minimal scheduler executes the graph against the sim.
-- [ ] Success criteria: cut occurs at the right wire location within tolerance;
-      handoff timing holds; run is repeatable across N sim seeds.
+- [x] Operation graph + scheduler (`orchestration/opgraph.py`): a DAG of
+      `Operation`s over resources; resource-constrained list scheduler →
+      per-op start/finish + makespan (cycle time), with a sequential baseline.
+- [x] A concrete multi-cell job (`orchestration/job.py`) embedding the
+      `bend_wire → present_wire → shear_wire` chain, plus the printer branch
+      (`print_bracket → eject_bracket`) and an `assemble` join — across 3
+      resources (printer, bender, arm).
+- [x] The graph **executes real sim actions**: `shear_wire` runs the tool-change
+      + shear sim, `eject_bracket` runs the printer eject sim (`opgraph_run.py
+      --execute`). `scripts/opgraph_check.py` gates precedence + resource
+      exclusivity + the overlap win.
+- [x] Cycle-time result: scheduling overlaps the wire work under the 40 s print →
+      **65 s sequential → 52 s scheduled (20% faster)**; gated by `assemble`.
+- [ ] Remaining: a deformable/segmented **wire proxy** + the wirebender cell's own
+      sim composed in for `bend_wire` (currently a timed stub); repeatability
+      across N sim seeds.
 
-This slice de-risks: MJCF import, coupling/datum model, machine↔arm timing, and
-the op-graph scheduler — one cut through every layer.
+This slice cut through every layer: vendored model, coupling/tool-change, a
+process tool, a second cell, and the op-graph scheduler that ties them together.
 
 ## Phase 4 — Orchestration layer
 
 Goal: turn the toy graph into a real operation-graph engine.
 
-- [ ] Define the operation-graph schema (nodes = ops, edges = precedence;
-      resources = machines/tools/fixtures; per-op duration + tool requirement).
-- [ ] Scheduler that assigns ops to resources respecting precedence.
-- [ ] **Cycle-time metric** computed from a sim run (the reward signal).
-- [ ] First optimizations: batch same-tool ops (eliminate tool changes); overlap
-      independent ops (arm works while bender forms next piece).
+- [x] Operation-graph schema (`Operation`: name, resource, duration, needs, tool,
+      action) + DAG validation. Started in Phase 3.
+- [x] Scheduler assigns ops to resources respecting precedence (single-server
+      resources; cross-resource parallelism).
+- [x] **Cycle-time metric** = scheduled makespan; durations sourced from the sim
+      sequences. Overlap win quantified vs sequential baseline.
+- [ ] First optimizations: batch same-tool ops (eliminate tool changes); the
+      overlap optimization is in — next is tool-change-aware sequencing + a
+      multi-unit pipeline (cooldown of unit N overlaps printing unit N+1).
+- [ ] Durations measured live from sim runs (currently from sequence definitions);
+      promote the scheduler to a search target over sequencing choices.
 
 ## Phase 5 — Generative DFM (the self-improvement payload)
 

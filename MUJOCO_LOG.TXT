@@ -16,3 +16,6 @@ WARNING: Nan, Inf or huge value in QACC at DOF 12. The simulation is unstable. T
 Fri Jun 19 08:17:55 2026
 WARNING: OpenGL error 0x502 in or before mjr_makeContext
 
+Fri Jun 19 08:21:52 2026
+WARNING: OpenGL error 0x502 in or before mjr_makeContext
+
