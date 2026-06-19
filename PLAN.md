@@ -90,6 +90,27 @@ Goal: model the modular end-effector concept and one process tool.
 - [ ] Seating-repeatability proxy (couple under jittered approach, measure pose
       spread) — deferred; motivates the physical kinematic coupling's self-centering.
 
+## Printer cell — Bambu P1S (eject-in-place)
+
+A second manufacturing cell: the 3D printer, enabling the print→eject→iterate
+loop. Decisions: **P1S (enclosed)**, **eject-in-place** removal (cool → open door
+→ full-width sweep pushes the part out the front into a bin).
+
+- [x] CAD: `parts/ejector_blade.py` — full-width sweep blade (chamfered lip + end
+      mounting tabs), parametric to the 256 mm bed. Watertight, validated.
+- [x] Sim: `sim/printer_cell.py` (MjSpec) — enclosure, heated bed, cooled part,
+      auto-opening door, Y-slide sweep ejector, catch bin. `scripts/eject_demo.py`
+      renders it; `scripts/eject_check.py` gates it (part on bed → ejected past
+      front edge → dropped into bin). PASS.
+- [ ] Control adapter (the cell's software side): LAN/MQTT via `bambulabs-api` /
+      `pybambu` — start a sliced 3MF print, read bed-temp / progress / done.
+      Needs P1S **Developer/LAN mode** enabled (note: Jan-2025 firmware added auth
+      that broke third-party control; dev-mode toggle restores it).
+- [ ] CAD the **auto door-opener** (servo/linear pusher) + the cooldown step.
+- [ ] Future upgrade: flex-plate **swap + magazine** for tall/enclosed parts
+      (reuses the tool-changer + kinematic-coupling work for plate registration).
+- [ ] Scheduling: overlap cooldown of unit N with printing of unit N+1.
+
 ## Phase 3 — First vertical slice (the milestone)
 
 > **SO-101 in MuJoCo, with a self-actuated shear end-effector, performing one

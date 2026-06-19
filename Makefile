@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange clean
+.PHONY: help sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell clean
 .DEFAULT_GOAL := help
 
 sim: ## run the SO-101 in the live interactive viewer (needs a display; run via `!`)
@@ -17,7 +17,7 @@ view: sim ## alias for `sim`
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
 
-check: parts cells so101 workcell-check toolchange-check ## run every validation gate
+check: parts cells so101 workcell-check toolchange-check eject-check ## run every validation gate
 
 parts: ## regenerate + validate local build123d parts -> exports/
 	$(PY) scripts/check_parts.py
@@ -39,6 +39,15 @@ toolchange-check: ## validate the tool changer (couple -> carry -> present -> sh
 
 toolchange: ## render the full tool-change + shear sequence -> exports/renders/toolchange.mp4
 	MUJOCO_GL=osmesa $(PY) scripts/toolchange_demo.py
+
+eject-check: ## validate P1S eject-in-place removes the part into the bin
+	$(PY) scripts/eject_check.py
+
+eject: ## render the P1S eject-in-place sequence -> exports/renders/eject.mp4
+	MUJOCO_GL=osmesa $(PY) scripts/eject_demo.py
+
+printer-cell: ## render a preview still of the printer cell -> exports/renders/printer_cell.png
+	MUJOCO_GL=osmesa $(PY) sim/printer_cell.py
 
 clean: ## remove generated artifacts under exports/ (keeps .gitkeep)
 	find exports -type f ! -name .gitkeep -delete
