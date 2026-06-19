@@ -39,6 +39,14 @@ python scripts/check_parts.py  # regenerate + validate local parts -> exports/
 python scripts/sync_cells.py   # pull geometry from external cells -> exports/cells/
 ```
 
+Or use the Makefile (`make help` lists all targets):
+
+```bash
+make sim       # open the SO-101 in the live interactive viewer (needs a display)
+make render    # headless scripted-motion video -> exports/renders/
+make check     # run every validation gate (parts + cells + model)
+```
+
 ## Composing cells (don't fork them)
 
 A machine that already lives as its own parts-as-code repo (the wire bender at
