@@ -45,7 +45,7 @@ def main() -> int:
         for p in problems:
             print("FAIL:", p)
         return 1
-    print("PASS: cool -> open door -> sweep -> part ejected into the bin")
+    print("PASS: cool -> open door -> toolhead knock -> part ejected into the bin")
     return 0
 
 

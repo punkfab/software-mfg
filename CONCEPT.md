@@ -89,8 +89,9 @@ Format notes:
   gate. The cell repo is never written to. This is the working stand-in for the
   partcad registry and embodies principle #6.
 - **Each machine is a cell with a physical + a control side.** The Bambu P1S
-  printer cell (`sim/printer_cell.py`) models the *physical* side — bed, door,
-  eject-in-place sweep — and gets a *control* adapter (LAN/MQTT: start print, read
+  printer cell (`sim/printer_cell.py`) models the *physical* side — CoreXY bed (Z)
+  + toolhead (XY), door, eject-in-place by toolhead-knock — and gets a *control*
+  adapter (LAN/MQTT: start print, read
   bed-temp/done). The wire bender is a cell; the printer is a cell; tools are
   cells. The scheduler sequences operations across them (e.g. overlap a part's
   cooldown with the next print). Control-side caution: Bambu's Jan-2025 firmware

@@ -96,12 +96,15 @@ A second manufacturing cell: the 3D printer, enabling the print→eject→iterat
 loop. Decisions: **P1S (enclosed)**, **eject-in-place** removal (cool → open door
 → full-width sweep pushes the part out the front into a bin).
 
-- [x] CAD: `parts/ejector_blade.py` — full-width sweep blade (chamfered lip + end
-      mounting tabs), parametric to the 256 mm bed. Watertight, validated.
-- [x] Sim: `sim/printer_cell.py` (MjSpec) — enclosure, heated bed, cooled part,
-      auto-opening door, Y-slide sweep ejector, catch bin. `scripts/eject_demo.py`
-      renders it; `scripts/eject_check.py` gates it (part on bed → ejected past
-      front edge → dropped into bin). PASS.
+- [x] Sim: `sim/printer_cell.py` (MjSpec) — **kinematically faithful P1S CoreXY**:
+      bed on a Z-slide, toolhead on X/Y slides at fixed gantry height (never Z).
+      Eject uses the **toolhead to knock** the cooled part off the front edge (no
+      added hardware — the standard farm trick) → bin; the bed then drops
+      (post-cycle). `eject_demo.py` renders, `eject_check.py` gates it (part on bed
+      → knocked past front edge → in bin). PASS. The bed actuator is modeled stiff
+      (leadscrew) so it holds the bed against gravity.
+- [x] CAD: `parts/ejector_blade.py` — full-width sweep blade, kept as an *optional*
+      deployable bolt-on for parts that don't knock cleanly; default is the toolhead.
 - [ ] Control adapter (the cell's software side): LAN/MQTT via `bambulabs-api` /
       `pybambu` — start a sliced 3MF print, read bed-temp / progress / done.
       Needs P1S **Developer/LAN mode** enabled (note: Jan-2025 firmware added auth
