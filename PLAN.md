@@ -77,12 +77,18 @@ Goal: a controllable SO-101 in MuJoCo.
 
 Goal: model the modular end-effector concept and one process tool.
 
-- [ ] Model the **kinematic coupling** interface (tool-side + arm-side) in build123d.
-- [ ] Model a **self-actuated shear** tool (its own actuator DOF in MJCF).
-- [ ] Model an **EPM/retention** abstraction in sim (attach/detach event, not full
-      magnetics) and a **tool rack** with parked tools.
-- [ ] Sim sequence: arm approaches rack → couples shear → lifts → (carries) →
-      returns/decouples. Measure seating repeatability proxy.
+- [x] **Kinematic coupling** in build123d (`parts/coupling_{arm,tool}_side.py`):
+      Maxwell 3-vee / 3-ball pair + central EPM/pogo bore. Watertight, validated.
+- [x] **Self-actuated shear** tool in MJCF (`sim/toolchanger.py`): free body with
+      its own hinged blade + position actuator — the arm only positions it.
+- [x] **EPM/retention** abstraction: a weld equality toggled via `data.eq_active`,
+      welded *in place* (relpose captured at the couple instant → zero snap). Plus
+      a **tool rack** cradle, contact-isolated so the tool only touches its rack.
+- [x] Sim sequence + gate (`scripts/toolchange_check.py`, `toolchange_demo.py`):
+      approach → couple → lift (+73 mm) → present at datum (9 mm) → shear (0.81 rad)
+      → return (4 mm) → decouple. Carry gap tracks the weld offset exactly (50 mm).
+- [ ] Seating-repeatability proxy (couple under jittered approach, measure pose
+      spread) — deferred; motivates the physical kinematic coupling's self-centering.
 
 ## Phase 3 — First vertical slice (the milestone)
 
