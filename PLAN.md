@@ -66,9 +66,12 @@ Goal: a controllable SO-101 in MuJoCo.
       end-effector motion (0.265 m). Gates the vendored model.
 - [x] Decide control interface: **position actuators** (STS3215 class, kp≈998);
       `data.ctrl[:] = desired joint angles (rad)`. Orchestration drives this.
-- [ ] Workcell scene (arm + table + fiducial/datum). Compose from the *outside*
-      (MjSpec API or an `<include>` wrapper) — do NOT edit the vendored snapshot.
-- [ ] IK helper (currently FK only); add when placement needs Cartesian targets.
+- [x] Workcell scene (arm + table + fiducial/datum), composed from the *outside*
+      via the MjSpec API (`sim/workcell.py`) — the vendored snapshot is untouched.
+      Defines `DATUM_POS`, the local reference for fine positioning.
+- [x] IK helper (`sim/ik.py`, damped least squares over the 5 arm joints).
+      `scripts/workcell_check.py` gates it: IK converges (0.4 mm) and the arm
+      reaches the datum under position control (0.4 mm).
 
 ## Phase 2 — Tool changer + self-actuated shear (sim)
 
