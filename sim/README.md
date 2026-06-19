@@ -12,8 +12,9 @@ table, datums, tool changer) from the outside via `<include>` or the MjSpec API.
 Validate / load:
 
 ```bash
-python scripts/so101_check.py      # compile + position-control move + FK check
-python -m mujoco.viewer --mjcf sim/so101/scene.xml   # interactive viewer (needs a display)
+python scripts/so101_check.py                        # compile + position-control move + FK check
+MUJOCO_GL=osmesa python scripts/so101_render.py      # headless: scripted-motion video+gif+stills -> exports/renders/
+DISPLAY=:0 python -m mujoco.viewer --mjcf sim/so101/scene.xml   # live interactive viewer (run via `!`)
 ```
 
 Control interface: `data.ctrl[:] = desired joint angles (rad)`, order =
