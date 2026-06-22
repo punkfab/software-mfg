@@ -18,6 +18,16 @@ for sub in ("orchestration", "sim", "scripts"):
     sys.path.insert(0, str(ROOT / sub))
 
 from opgraph import Operation, OperationGraph  # noqa: E402
+import wirebender_cell  # noqa: E402
+
+# bend_wire's duration comes from the bender's own program (pure time model, no
+# subprocess); its action runs the bender's real forward model when executed.
+BEND_SECS = wirebender_cell.bend_duration(wirebender_cell.PROGRAMS["staple"])
+
+
+def _bend_action():
+    r = wirebender_cell.simulate("staple")
+    return f"wire bent: {r['length']} mm, {r['n_bends']} bends ({r['duration']}s)"
 
 
 def _eject_action():
@@ -43,8 +53,9 @@ def _unit_ops(suffix="", with_actions=True):
         # printer branch (the slow one)
         Operation(p, "printer", 40.0),
         Operation(e, "printer", 7.0, needs=(p,), action=_eject_action if with_actions else None),
-        # wire branch — the Phase-3 form -> present -> shear chain
-        Operation(b, "bender", 8.0),
+        # wire branch — the Phase-3 form -> present -> shear chain.
+        # bend_wire now runs the wire bender's OWN forward model (composed by reference).
+        Operation(b, "bender", BEND_SECS, action=_bend_action if with_actions else None),
         Operation(pr, "arm", 3.0, needs=(b,), tool="shear"),
         Operation(sh, "arm", 2.0, needs=(pr,), tool="shear", action=_cut_action if with_actions else None),
         # join: insert the sheared wire into the ejected bracket

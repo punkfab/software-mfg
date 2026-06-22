@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell opgraph opgraph-run opgraph-check pipeline pipeline-check freecad freecad-roundtrip clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check opgraph opgraph-run opgraph-check pipeline pipeline-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -20,7 +20,7 @@ view: sim ## alias for `sim` (the arm)
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
 
-check: parts cells so101 workcell-check toolchange-check eject-check opgraph-check pipeline-check ## run every validation gate
+check: parts cells so101 workcell-check toolchange-check eject-check bend-check opgraph-check pipeline-check ## run every validation gate
 
 parts: ## regenerate + validate local build123d parts -> exports/
 	$(PY) scripts/check_parts.py
@@ -51,6 +51,12 @@ eject: ## render the P1S eject-in-place sequence -> exports/renders/eject.mp4
 
 printer-cell: ## render a preview still of the printer cell -> exports/renders/printer_cell.png
 	MUJOCO_GL=osmesa $(PY) sim/printer_cell.py
+
+bend: ## render the wire the bender produces (composed by reference) -> exports/renders/bent_wire.png
+	MUJOCO_GL=osmesa $(PY) scripts/bend_render.py
+
+bend-check: ## validate bend_wire runs the bender's real forward model (read-only)
+	$(PY) scripts/bend_check.py
 
 opgraph: ## schedule the multi-cell job; print the Gantt + cycle time
 	$(PY) scripts/opgraph_run.py

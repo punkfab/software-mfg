@@ -133,9 +133,14 @@ loop. Decisions: **P1S (enclosed)**, **eject-in-place** removal (cool → open d
       exclusivity + the overlap win.
 - [x] Cycle-time result: scheduling overlaps the wire work under the 40 s print →
       **65 s sequential → 52 s scheduled (20% faster)**; gated by `assemble`.
-- [ ] Remaining: a deformable/segmented **wire proxy** + the wirebender cell's own
-      sim composed in for `bend_wire` (currently a timed stub); repeatability
-      across N sim seeds.
+- [x] `bend_wire` composes the **wire bender's own forward model** by reference
+      (`sim/wirebender_cell.py` → `../wirebender/sim/bend_model.py` via its own
+      interpreter, `PYTHONDONTWRITEBYTECODE=1`, never written to). Produces the real
+      staple (78.84 mm, 2 bends) + a principled cycle time (14.25 s from an
+      axis-speed model). Gated by `scripts/bend_check.py`; rendered by `bend_render.py`.
+      Updated schedule: 71.2 s sequential → 52 s scheduled (27% win).
+- [ ] Remaining: feed the produced wire polyline into the present→shear sim as the
+      actual cut geometry (replace the proxy); repeatability across N sim seeds.
 
 This slice cut through every layer: vendored model, coupling/tool-change, a
 process tool, a second cell, and the op-graph scheduler that ties them together.
