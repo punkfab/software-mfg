@@ -126,6 +126,14 @@ Format notes:
   face/edge selectors (query-based, to face topological naming), a build123d
   emitter, then Onshape FeatureScript / Fusion API / a SolidWorks macro. This is
   how a human gets back into the loop on a code-defined part.
+- **Two repos, two halves of one system.** `../robot-effectors` is the *physical*
+  CAD half — the real end effectors (Fidlock magnet-triggered/mechanically-held
+  tool changer, 3-vee coupling, dock, pogo-pin power pass-through, rack&pinion
+  gripper, SO-101 adapter); `software-mfg` is the *sim + orchestration* half. The
+  changer/gripper geometry is canonical there and should be **composed by
+  reference** (read-only, its own interpreter — like wirebender), not re-modelled
+  here. Our sim's EPM-weld retention is a simplification of their real
+  **dock-actuated Fidlock latch** (the dock locks/releases, the arm only docks).
 - **Cells composed by reference (`cells.yaml` + `scripts/sync_cells.py`).** An
   external machine repo (the wire bender) is declared as a *cell*; sync invokes
   the cell's own interpreter on its own CAD to emit STEP/STL into
