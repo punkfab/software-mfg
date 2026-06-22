@@ -22,9 +22,11 @@ Python (3.11) interpreter.
 """
 
 
-def sketch(name, plane="XY", circles=(), rects=()):
-    """circles: [(cx, cy, r), ...]   rects: [(w, h, cx, cy), ...]"""
-    return {"kind": "sketch", "name": name, "plane": plane,
+def sketch(name, plane="XY", circles=(), rects=(), on=None):
+    """circles: [(cx, cy, r), ...]   rects: [(w, h, cx, cy), ...]
+    on: None -> XY plane; or a face QUERY {"face_of": feature, "side": "top"|"bottom"}
+    (coords stay global; the emitter transforms them into the face's local frame)."""
+    return {"kind": "sketch", "name": name, "plane": plane, "on": on,
             "circles": [list(c) for c in circles], "rects": [list(r) for r in rects]}
 
 
@@ -36,6 +38,12 @@ def pad(name, sketch, length, symmetric=False):
 def pocket(name, sketch, through=True, length=None):
     return {"kind": "pocket", "name": name, "sketch": sketch,
             "through": through, "length": length}
+
+
+def fillet(name, radius, select):
+    """Round edges chosen by a QUERY (resolved against live geometry at build time,
+    never stored kernel edge ids). select e.g. {"circles": "top_outer"}."""
+    return {"kind": "fillet", "name": name, "radius": radius, "select": select}
 
 
 def part(name, *features):
@@ -50,6 +58,8 @@ def update_from_freecad(spec, params):
             continue
         if f["kind"] in ("pad", "pocket") and "length" in p and f.get("length") is not None:
             f["length"] = p["length"]
+        if f["kind"] == "fillet" and "radius" in p:
+            f["radius"] = p["radius"]
         if f["kind"] == "sketch" and "radii" in p:
             for i, r in enumerate(p["radii"]):
                 if i < len(f["circles"]):
@@ -70,3 +80,30 @@ def sample_plate():
         sketch("hole_sketch", "XY", circles=[(0, 0, 4)]),
         pocket("hole", "hole_sketch", through=True),
     )
+
+
+def coupling_plate():
+    """The real tool-changer coupling blank (cf. parts/_coupling.py): a Ø50x6 disc
+    with a Ø12 central bore + 3 M3 mounting holes, and a filleted top rim.
+
+    The fillet selects the disc's top outer edge by QUERY, not by a stored edge id —
+    so it survives edits/rebuilds. This is a real project part, round-tripped.
+    """
+    import math
+    bolts = [(round(21 * math.cos(math.radians(a)), 4),
+              round(21 * math.sin(math.radians(a)), 4)) for a in (30, 150, 270)]
+    return part(
+        "coupling_plate",
+        sketch("disc_outline", "XY", circles=[(0, 0, 25)]),
+        pad("disc", "disc_outline", length=6),
+        fillet("rim_round", radius=1.0, select={"circles": "top_outer"}),
+        sketch("holes", "XY", circles=[(0, 0, 6)] + [(x, y, 1.7) for x, y in bolts]),
+        pocket("drill", "holes", through=True),
+        # counterbore recess around the bore, drilled from the TOP FACE (face-attached
+        # sketch — the face is chosen by query, then coords map into its local frame)
+        sketch("recess_sk", circles=[(0, 0, 9)], on={"face_of": "drill", "side": "top"}),
+        pocket("recess", "recess_sk", through=False, length=1.5),
+    )
+
+
+SAMPLES = {"plate": sample_plate, "coupling_plate": coupling_plate}

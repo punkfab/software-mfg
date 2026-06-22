@@ -20,7 +20,8 @@ FC_BUILD = ROOT / "featuretree" / "fc_build.py"
 
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
-    spec = IR.sample_plate()
+    sample = sys.argv[1] if len(sys.argv) > 1 else "plate"
+    spec = IR.SAMPLES[sample]()
     ir_json = OUT / f"{spec['name']}.ir.json"
     fcstd = OUT / f"{spec['name']}.FCStd"
     ir_json.write_text(json.dumps(spec, indent=2))

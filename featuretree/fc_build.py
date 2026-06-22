@@ -32,18 +32,34 @@ def build(spec, out_path):
     doc = App.newDocument(spec["name"])
     body = doc.addObject("PartDesign::Body", "Body")
     sketches = {}
+    tip = None      # last solid-producing feature (fillet bases reference it)
 
     for f in spec["features"]:
         kind = f["kind"]
         if kind == "sketch":
-            if f["plane"] != "XY":
-                raise ValueError("v0 supports only XY-plane sketches")
             sk = body.newObject("Sketcher::SketchObject", f["name"])
             sk.Label = f["name"]
-            for (cx, cy, r) in f["circles"]:
-                sk.addGeometry(Part.Circle(App.Vector(cx, cy, 0), App.Vector(0, 0, 1), r), False)
-            for (w, h, cx, cy) in f["rects"]:
-                _add_rect(sk, w, h, cx, cy)
+            on = f.get("on")
+            if on:                                  # attach to a face chosen by query
+                if f["rects"]:
+                    raise ValueError("face-attached sketches support circles only (v0)")
+                face = fc_common.resolve_face(tip.Shape, on.get("side", "top"))
+                sk.AttachmentSupport = [(tip, [face])]
+                sk.MapMode = "FlatFace"
+                doc.recompute()                     # so sk.Placement is resolved
+                zref = max(v.Z for v in tip.Shape.Vertexes) if on.get("side", "top") == "top" \
+                    else min(v.Z for v in tip.Shape.Vertexes)
+                inv = sk.Placement.inverse()
+                for (cx, cy, r) in f["circles"]:    # global -> sketch-local coords
+                    lp = inv.multVec(App.Vector(cx, cy, zref))
+                    sk.addGeometry(Part.Circle(App.Vector(lp.x, lp.y, 0), App.Vector(0, 0, 1), r), False)
+            else:
+                if f["plane"] != "XY":
+                    raise ValueError("unattached sketches must be on XY (v0)")
+                for (cx, cy, r) in f["circles"]:
+                    sk.addGeometry(Part.Circle(App.Vector(cx, cy, 0), App.Vector(0, 0, 1), r), False)
+                for (w, h, cx, cy) in f["rects"]:
+                    _add_rect(sk, w, h, cx, cy)
             sketches[f["name"]] = sk
         elif kind == "pad":
             p = body.newObject("PartDesign::Pad", f["name"])
@@ -51,6 +67,7 @@ def build(spec, out_path):
             p.Profile = sketches[f["sketch"]]
             p.Length = f["length"]
             p.Midplane = bool(f["symmetric"])
+            tip = p
         elif kind == "pocket":
             p = body.newObject("PartDesign::Pocket", f["name"])
             p.Label = f["name"]
@@ -60,12 +77,23 @@ def build(spec, out_path):
                 p.Midplane = True            # cut both ways -> robust without a face attach
             else:
                 p.Length = f["length"]
+            tip = p
+        elif kind == "fillet":
+            fl = body.newObject("PartDesign::Fillet", f["name"])
+            fl.Label = f["name"]
+            edges = fc_common.resolve_edges(tip.Shape, f["select"])  # QUERY -> live EdgeN
+            if not edges:
+                raise ValueError(f"fillet '{f['name']}' selected no edges")
+            fl.Base = (tip, edges)
+            fl.Radius = f["radius"]
+            tip = fl
         else:
             raise ValueError(f"unknown feature kind: {kind}")
         doc.recompute()
 
     doc.recompute()
     doc.saveAs(out_path)
+    body.Shape.exportStl(out_path[:-6] + ".stl" if out_path.endswith(".FCStd") else out_path + ".stl")
     return fc_common.result(doc)
 
 

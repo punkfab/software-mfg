@@ -34,13 +34,19 @@ Driven through FreeCAD's *own* Python 3.11 via `freecadcmd`, same as other cells
 Cross-checked: the sample plate is 11497.3 mm³ in **both** FreeCAD and build123d
 (`parts/example_plate.py`) — same DSL, two kernels, agreeing geometry.
 
-## Scope (v0) and the honest road ahead
+## Scope and the honest road ahead
 
-- **Now:** XY-plane sketches (rectangles + circles), Pad, Pocket(through);
-  parameter round-trip (lengths, radii) by name; FreeCAD backend.
-- **Next, in order of difficulty:** sketches attached to faces, then edge
-  selectors (fillets/chamfers) — i.e. confronting the topological-naming problem
-  with query-based selectors; then a build123d emitter (unify with the parts
-  pipeline); then Onshape FeatureScript and a SolidWorks macro emitter.
+- **Working now:** XY sketches (rect + circle), Pad, Pocket (through/depth),
+  **Fillet via edge query**, **face-attached sketches via face query**; parameter
+  round-trip (lengths, radii, fillet radius) by name; FreeCAD backend. The real
+  `coupling_plate` (Ø50×6 disc, bore, 3 mounts, filleted rim, top-face counterbore)
+  is expressed as IR and round-trips — watertight, dimensions exact, volume agrees
+  with build123d. `IR.SAMPLES = {plate, coupling_plate}`.
+- **The topological-naming sidestep, concretely:** fillets/face-sketches store a
+  *query* (`{"circles": "top_outer"}`, `{"face_of": "drill", "side": "top"}`), and
+  the emitter re-resolves it to live `EdgeN`/`FaceN` every build — so edits never
+  go stale. Next selectors: by-radius, by-position, by-count.
+- **Next:** a build123d emitter (one DSL → both the sim/manufacturing path and the
+  human-editable path); then Onshape FeatureScript and a SolidWorks macro emitter.
 - **Won't pretend:** a SolidWorks `.SLDPRT` can't be written on Linux — that
   backend emits a macro to run on a SolidWorks seat.
