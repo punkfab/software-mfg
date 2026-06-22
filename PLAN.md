@@ -189,6 +189,22 @@ Goal: close the sim-to-real gap on real hardware.
 - [ ] Fiducial-based local relocalization for fine ops after base moves.
 - [ ] Multi-arm coordination in the scheduler (parallel resources).
 
+## Phase 8 — Vertically-integrated planning (the strategic thesis)
+
+Goal: extend the operation graph from "minimize cycle time" to "plan the whole
+process under product + supply variation" (CONCEPT.md §1a).
+
+- [ ] **Build-vs-buy**: a resource can be an internal cell (cycle time + capital)
+      or a supplier (price + lead time + risk); the optimizer weighs them per op.
+- [ ] **Sourcing & materials model**: materials, substitutions, supplier lead
+      times as parameters; re-plan around a shortage or price move.
+- [ ] **Tooling decisions in the loop**: design+print a tool vs. buy it, evaluated
+      against the variant that needs it.
+- [ ] **JIT re-planning**: on a product variant or supply change, re-schedule /
+      re-tool / re-source automatically; measure replan latency + cost delta.
+- [ ] Cost/lead-time/risk as first-class objectives alongside cycle time
+      (multi-objective scheduling).
+
 ## Cross-cutting / ongoing
 
 - [ ] Keep a sim-to-real gap log (predicted vs. measured) per physical milestone.

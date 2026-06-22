@@ -13,6 +13,42 @@ The north star: **rapid physical prototyping that loops like Claude Code** —
 propose a design/assembly, evaluate it, refine it — but grounded in the reality
 that atoms are slow and semi-irreversible.
 
+## 1a. Strategic thesis — why this becomes table stakes
+
+The bet behind this project: **vertical integration plus software-defined,
+end-to-end simulation of the entire manufacturing process becomes a competitive
+necessity, not a luxury.** As product cycles shorten and supply chains stay
+volatile, the firms that win will be the ones that can model and re-plan the
+*whole* pipeline in software — design, tooling, process, sourcing, assembly — and
+change it on the fly instead of through months of manual re-industrialization.
+
+Concretely, the simulator and the operation graph must eventually carry more than
+geometry and motion:
+
+- **Tooling is in the loop, not a given.** End-effectors, fixtures, the shear, the
+  tool changer are designed, simulated, and costed alongside the product. A new
+  variant may imply a new tool — and the system should weigh *designing + printing
+  it* against *buying it*.
+- **Build-vs-buy is a graph decision.** Every operation/part can be made in-house
+  (a cell with a cycle time + capital cost) or sourced (a supplier with a price +
+  lead time + risk). The operation graph is the natural home for this: a node's
+  resource is either an internal cell or an external supplier, and the
+  scheduler/optimizer weighs cycle time, cost, capital, and risk together.
+- **Sourcing & materials are parameters, not afterthoughts.** Material
+  availability, substitutions, and supplier lead times live in the model, so the
+  same engine that minimizes cycle time can re-plan around a shortage or a price move.
+- **Just-in-time process modification is the edge.** When the product changes (a
+  variant) or the supply changes (a material/supplier swap), the operation graph
+  **re-plans automatically** — re-schedule, re-tool, re-source — rather than
+  re-industrializing by hand. That agility *is* the competitive advantage.
+
+What's built so far is the substrate for exactly this: parts and tools as code,
+cells composed by reference, and an operation graph whose scheduler already turns
+cycle time into a measured, optimizable signal. Build/buy, sourcing, lead time,
+and cost are additional attributes on those same operations and resources — the
+roadmap (Phase 5+) extends the optimizer from "minimize cycle time" to "plan the
+whole vertically-integrated process under product and supply variation."
+
 ## 2. The core insight: two loops, not one
 
 Software iteration is ~free and reversible. Physical iteration costs hours,
