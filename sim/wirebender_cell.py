@@ -61,6 +61,20 @@ def bend_duration(program) -> float:
     return round(t, 2)
 
 
+def staple_in_workcell(center, z, program_name="staple"):
+    """Place the bender's produced wire into the workcell: Nx3 points (metres),
+    planar staple centred (centroid) at `center` xy and lifted to height `z` —
+    the geometry the arm presents and the shear closes on. Closes the bender→arm
+    geometric loop (the bender's real output becomes the arm's real input)."""
+    import numpy as np
+    pts = np.asarray(simulate(program_name)["points"], float) * 1e-3   # mm -> m
+    pts = pts - pts.mean(0)
+    pts[:, 0] += center[0]
+    pts[:, 1] += center[1]
+    pts[:, 2] = z
+    return pts.tolist()
+
+
 def simulate(program_name="staple"):
     """Run the bender's forward model by reference; return the produced wire."""
     program = PROGRAMS[program_name]

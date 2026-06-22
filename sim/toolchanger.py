@@ -35,7 +35,7 @@ WIRE_POS = DATUM_POS + np.array([0.0, 0.0, 0.005])
 _C = mujoco.mjtGeom
 
 
-def build_spec():  # noqa: F811 - wraps workcell.build_spec and extends it
+def build_spec(wire_points=None):  # noqa: F811 - wraps workcell.build_spec and extends it
     from workcell import build_spec as _workcell_spec
     spec = _workcell_spec()
     wb = spec.worldbody
@@ -112,15 +112,25 @@ def build_spec():  # noqa: F811 - wraps workcell.build_spec and extends it
     act.ctrlrange = [0.0, 0.9]
     act.forcerange = [-15.0, 15.0]
 
-    # --- wire proxy at the datum (what the shear closes on) ---
-    wire = wb.add_geom()
-    wire.name = "wire"
-    wire.type = _C.mjGEOM_CYLINDER
-    wire.size = [0.0008, 0.03, 0]       # thin rod along its local z
-    wire.pos = WIRE_POS.tolist()
-    wire.quat = [0.7071, 0.7071, 0, 0]  # lay it along the y axis
-    wire.rgba = [0.6, 0.6, 0.62, 1.0]
-    wire.contype, wire.conaffinity = 0, 0
+    # --- wire at the datum (what the shear closes on) ---
+    # wire_points: the REAL bent wire from the bender cell (Nx3, metres, workcell
+    # frame) as capsule segments. None -> a thin straight proxy (fast default).
+    if wire_points is None:
+        wire = wb.add_geom()
+        wire.name, wire.type = "wire", _C.mjGEOM_CYLINDER
+        wire.size = [0.0008, 0.03, 0]
+        wire.pos = WIRE_POS.tolist()
+        wire.quat = [0.7071, 0.7071, 0, 0]
+        wire.rgba = [0.6, 0.6, 0.62, 1.0]
+        wire.contype, wire.conaffinity = 0, 0
+    else:
+        for i in range(len(wire_points) - 1):
+            g = wb.add_geom()
+            g.name, g.type = f"wire{i}", _C.mjGEOM_CAPSULE
+            g.fromto = [*wire_points[i], *wire_points[i + 1]]
+            g.size = [0.001, 0, 0]
+            g.rgba = [0.95, 0.45, 0.1, 1.0]   # bright so the real wire reads in renders
+            g.contype, g.conaffinity = 0, 0
 
     # --- weld: EPM stand-in. Inactive; relpose hangs tool below the end frame ---
     dock = spec.add_equality()
@@ -136,8 +146,8 @@ def build_spec():  # noqa: F811 - wraps workcell.build_spec and extends it
     return spec
 
 
-def build_model():
-    return build_spec().compile()
+def build_model(wire_points=None):
+    return build_spec(wire_points).compile()
 
 
 if __name__ == "__main__":
