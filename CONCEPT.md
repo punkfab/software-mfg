@@ -82,6 +82,14 @@ Format notes:
   (swept `PIN_OFFSET` / `MANDREL_D`) is already a partcad-shaped problem. It is
   the *intended* registry layer; standing up its sandboxed runtime is deferred
   (see PLAN.md). Until then, cells are composed by the lightweight bridge below.
+- **Operation round-trip / human editing (`featuretree/`).** No neutral *file*
+  preserves a feature tree across tools (topological naming + no shared op
+  ontology), so we keep a neutral **feature IR (DSL)** and emit it into each
+  tool's native tree. FreeCAD is the first backend (its own `freecadcmd` → a real
+  `.FCStd` tree); human edits flow back into the IR by feature name. Roadmap:
+  face/edge selectors (query-based, to face topological naming), a build123d
+  emitter, then Onshape FeatureScript / Fusion API / a SolidWorks macro. This is
+  how a human gets back into the loop on a code-defined part.
 - **Cells composed by reference (`cells.yaml` + `scripts/sync_cells.py`).** An
   external machine repo (the wire bender) is declared as a *cell*; sync invokes
   the cell's own interpreter on its own CAD to emit STEP/STL into

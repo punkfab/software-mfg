@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell opgraph opgraph-run opgraph-check pipeline pipeline-check clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell opgraph opgraph-run opgraph-check pipeline pipeline-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -66,6 +66,12 @@ pipeline: ## multi-unit pipeline: per-unit cycle time + scaling with a 2nd print
 
 pipeline-check: ## validate pipelining amortizes cycle time + parallel machines scale
 	$(PY) scripts/pipeline_check.py
+
+freecad: ## emit a FreeCAD .FCStd feature tree from the IR (needs the FreeCAD AppImage)
+	$(PY) scripts/freecad_gen.py
+
+freecad-roundtrip: ## IR -> FreeCAD tree -> human edit -> back into the IR -> regenerate
+	$(PY) scripts/freecad_roundtrip.py
 
 clean: ## remove generated artifacts under exports/ (keeps .gitkeep)
 	find exports -type f ! -name .gitkeep -delete
