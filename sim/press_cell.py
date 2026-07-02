@@ -13,11 +13,31 @@ whole tool hangs from a MOUNT slide (the arm); its hold force stays ~gravity iff
 the frame is self-reacting.
 """
 
+import sys
+from pathlib import Path
+
 import mujoco
 import numpy as np
 
-SEAT_DEPTH = 0.008                        # bearing travel into the bore to seat
-PRESS_FORCE = 300.0                       # press-fit resistance at the seat (N)
+
+def _cal(name, default):
+    """Read a calibrated value from the tracked parameter vector, falling back to
+    the literal if the store is missing. The sim consumes reality's numbers, not
+    hardcoded guesses — and the staleness stamp (calibration/) says how far to
+    trust them. Fallback keeps the sim runnable before anything is anchored."""
+    try:
+        root = str(Path(__file__).resolve().parent.parent)
+        if root not in sys.path:
+            sys.path.insert(0, root)
+        from calibration.store import CalibrationStore
+        store = CalibrationStore.load(Path(root) / "calibration" / "store.json")
+        return store.value(name, default)
+    except Exception:
+        return default
+
+
+SEAT_DEPTH = _cal("seat_depth", 0.008)    # bearing travel into the bore to seat (calibrated)
+PRESS_FORCE = _cal("press_force", 300.0)  # press-fit resistance at the seat, N (calibrated)
 FIT_STIFFNESS = PRESS_FORCE / SEAT_DEPTH  # modelled as ram-slide stiffness (robust)
 RAM_DRIVE = 360.0                         # force the ram delivers (> fit -> it seats)
 _G = mujoco.mjtGeom

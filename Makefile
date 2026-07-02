@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check freecad freecad-roundtrip clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -20,7 +20,7 @@ view: sim ## alias for `sim` (the arm)
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
 
-check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check ## run every validation gate
+check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check ## run every validation gate
 
 parts: ## regenerate + validate local build123d parts -> exports/
 	$(PY) scripts/check_parts.py
@@ -84,6 +84,12 @@ pipeline: ## multi-unit pipeline: per-unit cycle time + scaling with a 2nd print
 
 pipeline-check: ## validate pipelining amortizes cycle time + parallel machines scale
 	$(PY) scripts/pipeline_check.py
+
+calib: ## walk the calibration round-trip: query -> staleness stamp -> ingest a measurement -> diff
+	$(PY) scripts/calib_demo.py
+
+calib-check: ## validate the press sim runs on FRESH, in-envelope calibrated params (with margin)
+	$(PY) scripts/calib_check.py
 
 freecad: ## emit a FreeCAD .FCStd feature tree from the IR (needs the FreeCAD AppImage)
 	$(PY) scripts/freecad_gen.py

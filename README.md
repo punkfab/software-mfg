@@ -12,20 +12,35 @@ design and the process automatically as it solidifies.
 
 ## Core idea
 
-Two coupled loops: a **fast inner loop in simulation** (MuJoCo) does ~95% of the
-iteration; a **slow outer loop in the physical world** sparsely verifies winners
-and corrects the simulator's lies. Everything — parts, assemblies, process steps
-— is design-as-code, versioned and regenerable.
+Three coupled loops, each keeping the next honest:
+
+1. **Design round-trip** — a part is a declarative feature-IR that emits an
+   *editable* FreeCAD/Onshape tree and folds human edits back by feature name
+   (`featuretree/`). Not a dead STEP hand-off.
+2. **Sim-CI** — design → simulate (MuJoCo) → verdict. Fast, cheap, repeatable;
+   ~95% of the iteration happens here. Every `*-check` gate is one test.
+3. **Reality calibration** — a physical build measures what the sim got wrong and
+   writes the correction back into the model (`calibration/`). This is the slow
+   outer loop that *corrects the simulator's lies*.
+
+The catch sim-CI can't escape on its own: you **test a simulation** but **ship a
+physical part**. A green sim only means something where its parameters have been
+anchored to reality — so the sim is treated as a **cache of reality**, and the
+calibration layer is its invalidation signal. Everything — parts, assemblies,
+process steps, and the calibrated parameters themselves — is design-as-code,
+versioned and regenerable.
 
 ## Layout
 
 ```
 parts/         # build123d part scripts authored here (each exposes `part`)
 assemblies/    # partcad assemblies-as-code (composition + positions)
-sim/           # MuJoCo MJCF models + scenes
-orchestration/ # operation-graph + scheduler (later phases)
-scripts/       # check_parts.py (local parts) + sync_cells.py (external cells)
-exports/       # generated STEP / STL / 3MF (gitignored); cells/ for cell output
+sim/           # MuJoCo cells: workcell, printer, wirebender, press, toolchanger, SO-101
+featuretree/   # feature-IR -> editable FreeCAD/Onshape tree, round-tripped by name
+orchestration/ # operation-graph + resource scheduler (cycle-time optimization)
+calibration/   # the reality leg: calibrated parameter vector + staleness stamp + writeback
+scripts/       # one check_*.py gate + one *_demo.py renderer per cell/subsystem
+exports/       # generated STEP / STL / 3MF + renders (gitignored); cells/ for cell output
 cells.yaml     # external machine cells composed by reference (e.g. ../wirebender)
 ```
 
@@ -44,7 +59,8 @@ Or use the Makefile (`make help` lists all targets):
 ```bash
 make sim       # open the SO-101 in the live interactive viewer (needs a display)
 make render    # headless scripted-motion video -> exports/renders/
-make check     # run every validation gate (parts + cells + model)
+make check     # run every validation gate (parts + cells + model + calibration)
+make calib     # walk the calibration round-trip (staleness stamp + measurement writeback)
 ```
 
 ## Composing cells (don't fork them)
@@ -57,6 +73,29 @@ of truth and is **never modified** (sync writes no bytecode into it).
 
 Recorded toolchain (Phase 0): Python 3.12.9, build123d 0.10.0, mujoco 3.9.0,
 partcad 0.7.135.
+
+## Round-trip with reality (calibration)
+
+The outer loop is mechanized in `calibration/` — see
+[calibration/README.md](./calibration/README.md) for detail. In short:
+
+- The real source of truth isn't geometry or code, it's the **calibrated parameter
+  vector** (`calibration/store.json`): each parameter is a *value + σ + the operating
+  point it was measured at + the envelope it's trusted over + which physical build
+  last confirmed it*. Sims read it (`sim/press_cell.py` pulls its press force and
+  seat depth from the store); measurements write it.
+- Every sim result carries a **staleness stamp** — `FRESH` (trust it), `STALE`
+  (too many design iterations since reality confirmed it → re-anchor), or
+  `EXTRAPOLATING` (ran outside where the model was ever validated → green is a
+  guess). Staleness is counted in **builds-since-anchor**, not wall-clock, because
+  the design target moves.
+- A physical measurement is ingested as a **reviewable diff** (`ParamDiff`: old →
+  new, the residual the sim got wrong, updated σ), not a silent overwrite — the
+  same review-then-commit discipline as the featuretree design round-trip.
+- `make calib-check` is a gate (part of `make check`): it fails if a sim leans on
+  parameters reality hasn't confirmed lately, or if the −2σ edge of a calibrated
+  value would miss its requirement. Green means *in-tolerance with margin*, not
+  merely at nominal.
 
 ## The parts convention
 

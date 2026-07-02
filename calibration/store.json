@@ -1,0 +1,35 @@
+{
+  "current_build": 7,
+  "params": {
+    "press_force": {
+      "value": 300.0,
+      "unit": "N",
+      "sigma": 12.0,
+      "op_point": {"bore_fit_um": 20, "bearing_od_mm": 12},
+      "envelope": {"bore_fit_um": [12, 30], "bearing_od_mm": [10, 16]},
+      "anchored_at_build": 7,
+      "provenance": "coupon-2026-06-15 loadcell",
+      "residual": 0.0
+    },
+    "seat_depth": {
+      "value": 0.008,
+      "unit": "m",
+      "sigma": 0.0004,
+      "op_point": {"bore_fit_um": 20, "bearing_od_mm": 12},
+      "envelope": {"bore_fit_um": [12, 30], "bearing_od_mm": [10, 16]},
+      "anchored_at_build": 7,
+      "provenance": "coupon-2026-06-15 caliper",
+      "residual": 0.0
+    },
+    "bend_springback_deg": {
+      "value": 4.5,
+      "unit": "deg",
+      "sigma": 0.8,
+      "op_point": {"wire_dia_mm": 2.0, "bend_deg": 90},
+      "envelope": {"wire_dia_mm": [1.5, 2.5], "bend_deg": [45, 100]},
+      "anchored_at_build": 6,
+      "provenance": "bend-log 2026-06-14",
+      "residual": 0.0
+    }
+  }
+}
