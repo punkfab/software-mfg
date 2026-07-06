@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check freecad freecad-roundtrip clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -20,7 +20,7 @@ view: sim ## alias for `sim` (the arm)
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
 
-check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check ## run every validation gate
+check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check ## run every validation gate
 
 parts: ## regenerate + validate local build123d parts -> exports/
 	$(PY) scripts/check_parts.py
@@ -102,6 +102,18 @@ foil-lom: ## plan a foil-LOM build: slice a solid into foil layers + print the p
 
 foil-lom-check: ## validate the foil-LOM slice plan is manufacturable + schedulable
 	$(PY) scripts/foil_lom_check.py
+
+glue: ## render the switchable hot-glue tool (body + nozzle bracket) -> exports/renders/
+	MUJOCO_GL=osmesa $(PY) scripts/glue_demo.py
+
+glue-check: ## validate the hot-glue tool mounts the switcher + its forward model is sound
+	$(PY) scripts/glue_check.py
+
+coord: ## schedule the two-arm glue-and-hold task; print the coordination Gantt
+	$(PY) orchestration/coord_job.py
+
+coord-check: ## validate the two-arm coordination (hold never drops the part; needs 2 arms)
+	$(PY) scripts/coord_check.py
 
 freecad: ## emit a FreeCAD .FCStd feature tree from the IR (needs the FreeCAD AppImage)
 	$(PY) scripts/freecad_gen.py

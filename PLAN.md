@@ -194,10 +194,20 @@ Goal: close the sim-to-real gap on real hardware.
 
 ## Phase 7 — Mobile base & multi-arm (scale breadth)
 
+- [x] **Multi-arm coordination in the scheduler** — the two-arm *glue-and-hold* task
+      (`orchestration/coord_job.py`, `scripts/coord_check.py`): a `hold` resource that
+      must grip continuously from present through release, a `cure` dwell the release
+      waits on, and the requirement that glue ∥ hold overlap (so the task genuinely
+      needs two arms, not one). First real leader/follower coordination.
+- [x] **Hot-glue applicator tool** (`parts/glue_*.py`, `sim/glue_cell.py`) — switchable
+      on the shear's coupling; the vehicle for the coordination task above.
+- [ ] Drive the coordination sim with the real leader/follower arms (compose so101-lab
+      by reference); measure real hold stability + bead placement vs. sim.
 - [ ] Add mobile base (planar/free joint) in MuJoCo; apply coarse-by-base /
       fine-by-datum control.
 - [ ] Fiducial-based local relocalization for fine ops after base moves.
-- [ ] Multi-arm coordination in the scheduler (parallel resources).
+- [ ] Pre-heat scheduling: keep the glue tool hot at the dock; amortize the ~2 min
+      heat across many joints (pipeline the coordination task).
 
 ## Phase 8 — Vertically-integrated planning (the strategic thesis)
 

@@ -33,6 +33,7 @@ Scores are H / M / L, deliberately qualitative.
 | **Foil former** | sheet → folded stiff profile | H | H | H | H | **built** — `sim/foil_former.py` |
 | **Foil LOM** | stack + bond + cut foil → solid | H | M | H | M | **built** — `sim/foil_lom.py` |
 | **Press / insert** | self-reacting axial force | H | H | H | H | **built** — `sim/press_cell.py` |
+| **Hot-melt gluing** | dispense adhesive bead along a path | H | M | H | H | **built** — `parts/glue_*.py`, `sim/glue_cell.py` |
 | **Pulse / spark forming** (EHF / EMF) | high-rate die-conform of sheet | M | M | M | L | **candidate** — deletes springback |
 | **VFA impact welding** | solid-state weld foil layer-to-layer | L | M | H | L | **candidate** — full-density LOM |
 | **Cold spray** | supersonic solid-state powder build-up | M | M | M | L | **candidate** — dense bulk Al (not plasma) |

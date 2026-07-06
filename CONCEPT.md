@@ -207,7 +207,16 @@ Arm performs its own tool changes, picking process tools off a rack.
   end-effector tool; arm positions, the shear supplies its own cutting force
   (solenoid / motor+leadscrew / pneumatic) because SO-101 joints cannot shear
   spring/music wire.
-- Future tools: gripper, screwdriver, **heat-set-insert press**, dispenser.
+- **Press** — self-reacting C-frame for seating bearings/inserts (`sim/press_cell.py`).
+- **Hot-glue applicator** (`parts/glue_*.py`, `sim/glue_cell.py`) — a switchable
+  dispenser on the *same* coupling interface as the shear (so the changer already
+  handles it). Build/buy like the shear: printed body + motorized stick feed (build),
+  melt cartridge + nozzle held off by a **thermal break** (buy). Gluing is nearly
+  force-free — the physics is thermal (melt-ready) + extrusion + open/set time, and
+  those set/open times drive **multi-arm coordination** (§6): the first task that
+  genuinely needs two arms (one holds the joint while the other glues, and keeps
+  holding until it sets).
+- Future tools: gripper, screwdriver, dispenser variants.
 
 ### 5.4 Mobile base
 Gives the arms more DOF and lets them move in the workcell (more to simulate).

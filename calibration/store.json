@@ -80,6 +80,56 @@
       "anchored_at_build": 0,
       "provenance": "estimated adhesive (borax/boric-acid) lamination bond; ultrasonic is higher; NOT anchored",
       "residual": 0.0
+    },
+    "glue_melt_temp_c": {
+      "value": 150.0,
+      "unit": "C",
+      "sigma": 10.0,
+      "op_point": {"ambient_c": 20},
+      "envelope": {"ambient_c": [10, 30]},
+      "anchored_at_build": 0,
+      "provenance": "EVA hot-melt datasheet (mid-temp stick); NOT physically anchored",
+      "residual": 0.0
+    },
+    "glue_heatup_tau_s": {
+      "value": 35.0,
+      "unit": "s",
+      "sigma": 10.0,
+      "op_point": {"ambient_c": 20},
+      "envelope": {"ambient_c": [10, 30]},
+      "anchored_at_build": 0,
+      "provenance": "estimated first-order melt-cartridge time constant; NOT anchored",
+      "residual": 0.0
+    },
+    "glue_bead_width_mm": {
+      "value": 3.0,
+      "unit": "mm",
+      "sigma": 0.6,
+      "op_point": {"nozzle_d_mm": 2.0, "standoff_mm": 2.0, "speed_mm_s": 15},
+      "envelope": {"speed_mm_s": [5, 30], "standoff_mm": [1, 4]},
+      "anchored_at_build": 0,
+      "provenance": "estimated bead width at reference nozzle/standoff/speed; NOT anchored",
+      "residual": 0.0
+    },
+    "glue_open_time_s": {
+      "value": 15.0,
+      "unit": "s",
+      "sigma": 5.0,
+      "op_point": {"ambient_c": 20},
+      "envelope": {"ambient_c": [10, 30]},
+      "anchored_at_build": 0,
+      "provenance": "estimated tacky/workable window before skinning; NOT anchored",
+      "residual": 0.0
+    },
+    "glue_set_time_s": {
+      "value": 60.0,
+      "unit": "s",
+      "sigma": 20.0,
+      "op_point": {"ambient_c": 20},
+      "envelope": {"ambient_c": [10, 30]},
+      "anchored_at_build": 0,
+      "provenance": "estimated time to handling strength; full cure longer; NOT anchored",
+      "residual": 0.0
     }
   }
 }
