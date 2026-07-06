@@ -191,6 +191,15 @@ Goal: close the sim-to-real gap on real hardware.
 - [ ] Measure real seating repeatability & cut accuracy vs. sim; ingest via the
       calibration layer (press force/seat depth already have anchored parameters).
 - [ ] Validate one consolidated design against its multi-part predecessor.
+- [x] **CAD-referenced world model** (`tracking/`): part-pose tracking with staleness
+      (FRESH/STALE/EXTRAPOLATING on pose, reusing the calibration idea) + verification of
+      placements against the CAD-nominal poses. Camera-agnostic (sim observations now).
+- [x] **End-to-end assembly pipeline** (`orchestration/assemble.py`): CAD assembly -> plan
+      -> CAM toolpath -> motion (IK) -> track -> verify, as one gated driver.
+- [ ] Real perception: fiducial (AprilTag + CAD transform) then markerless CAD-pose
+      (FoundationPose/MegaPose class) as the observation source.
+- [ ] Placo motion backend for orientation-aware toolpath following (nozzle normal to
+      surface); execute on the real leader/follower arms via so101-lab (by reference).
 
 ## Phase 7 — Mobile base & multi-arm (scale breadth)
 

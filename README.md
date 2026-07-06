@@ -38,8 +38,9 @@ parts/         # build123d part scripts authored here (each exposes `part`)
 assemblies/    # partcad assemblies-as-code (composition + positions)
 sim/           # cells: workcell, printer, wirebender, press, toolchanger, SO-101, foil former + LOM
 featuretree/   # feature-IR -> editable FreeCAD/Onshape tree, round-tripped by name
-orchestration/ # operation-graph + resource scheduler (cycle-time optimization)
+orchestration/ # op-graph + scheduler + CAM toolpath + end-to-end assemble driver
 calibration/   # the reality leg: calibrated parameter vector + staleness stamp + writeback
+tracking/      # world model: CAD-referenced part-pose tracking + staleness + verify
 scripts/       # one check_*.py gate + one *_demo.py renderer per cell/subsystem
 exports/       # generated STEP / STL / 3MF + renders (gitignored); cells/ for cell output
 cells.yaml     # external machine cells composed by reference (e.g. ../wirebender)

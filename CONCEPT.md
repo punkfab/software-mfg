@@ -249,6 +249,35 @@ Two automatable optimizations fall out, and both are what we ultimately want:
 > "It gets faster automatically" is credible **as scheduling + DFA over a sim**,
 > not as autonomous physical trial-and-error.
 
+### 6a. From CAD to motion — the end-to-end assembly pipeline
+
+The op-graph is the plan; this is how a plan becomes a *verified* physical build. One
+sample assembly runs the whole stack (`orchestration/assemble.py`):
+
+1. **Reference** — the CAD assembly (`tracking/assembly.py`): parts + nominal poses +
+   mates in the work datum frame. The STEP/CAD assembly is both the **plan** (where each
+   part goes) and the **check** (did it land there).
+2. **Plan** — an op-graph over arm/tool/cure resources (§6).
+3. **CAM** — a process op becomes a **toolpath** (`orchestration/toolpath.py`): e.g. the
+   glue bead resampled into an ordered list of tool-tip targets.
+4. **Motion** — the toolpath is solved to joint waypoints by IK. The solver is
+   **pluggable**: a built-in positional DLS solver (`sim/ik.py`) keeps everything
+   self-contained; **Placo** (QP, orientation-aware) drops in for real following, where
+   the tool must stay normal to the surface along the path.
+5. **Execute + track** — the world model (`tracking/`) follows every part: which arm
+   holds it, its estimated pose, and **pose staleness** — a grasped part carried without
+   being re-observed drifts to `EXTRAPOLATING` (dead-reckoned from arm FK), and an
+   observation re-anchors it to `FRESH`. This is the calibration layer's staleness idea
+   (§4/`calibration/`) applied to 6-DoF pose. Camera-agnostic: fed by simulated
+   observations now, a real fiducial / CAD-pose estimator later.
+6. **Verify** — every placed part's tracked pose is checked against the CAD-nominal
+   within tolerance. The CAD file closes the loop.
+
+**Repo boundary.** Motion *execution* on the real leader/follower arms lives in the
+`so101-lab` hardware repo (lerobot + Placo); `software-mfg` owns the design-time world
+model, planning, CAM, and verification, and **composes `so101-lab` by reference** (like
+the wire bender) — it consumes live arm pose, it does not fork the driver layer.
+
 ## 7. Scope boundaries / honesty
 
 - Full autonomous *physical* iteration is **not** claimed. Physical builds are

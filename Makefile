@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check freecad freecad-roundtrip clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check tracking-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -20,7 +20,7 @@ view: sim ## alias for `sim` (the arm)
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
 
-check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check ## run every validation gate
+check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check tracking-check assemble-check ## run every validation gate
 
 parts: ## regenerate + validate local build123d parts -> exports/
 	$(PY) scripts/check_parts.py
@@ -114,6 +114,15 @@ coord: ## schedule the two-arm glue-and-hold task; print the coordination Gantt
 
 coord-check: ## validate the two-arm coordination (hold never drops the part; needs 2 arms)
 	$(PY) scripts/coord_check.py
+
+assemble: ## run the end-to-end assembly: CAD -> plan -> CAM toolpath -> motion -> track -> verify
+	$(PY) orchestration/assemble.py
+
+assemble-check: ## validate the end-to-end assembly pipeline (reachable toolpath + verified placement)
+	$(PY) scripts/assemble_check.py
+
+tracking-check: ## validate CAD-referenced pose tracking (staleness + verify vs nominal)
+	$(PY) scripts/tracking_check.py
 
 freecad: ## emit a FreeCAD .FCStd feature tree from the IR (needs the FreeCAD AppImage)
 	$(PY) scripts/freecad_gen.py
