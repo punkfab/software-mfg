@@ -47,6 +47,32 @@ cheap 80/20 of `footed4`. Graduate to **omni_diff** when you want to dock from a
 (strafe parallel to the printer) with genuine lateral hold — your differentially-driven wheel
 is the right mechanism for that, and it's the only holonomic option that actually locks.
 
+## Buyable kit: the 244×198 mm mecanum chassis (ThanksBuyer / AliExpress)
+
+A cheap 4WD mecanum kit (244×198 mm deck, ~80 mm mecanum, DC encoder gearmotors). Run it
+through the model on the printer-pick and it **FAILS three ways** — a useful catch before buying:
+
+| | Kit (244×198) | why |
+|---|---|---|
+| Fwd hold | **6.3 N** (back-drive) | DC gearmotors barely hold; they back-drive before sliding |
+| Lat hold | **2.3 N** | passive mecanum rollers free-spin |
+| Reach | **tips** at ~0.13 m CG | front support only 122 mm out; the arm's reach CG sits right at the edge |
+
+Dynamically it flips over at the working reach. The binding problems are the **small
+footprint** (front edge 122 mm vs a ~0.3 m reach) and **passive rollers + backdrivable
+motors**. So: **buy it as a navigation / docking test mule** — it's perfect for proving the
+base can drive to the printer and dock (`station.py`) and for building the odometry /
+relocalisation stack — but it needs three cheap mods before it can *pick*:
+
+1. **Forward outrigger** — bolt a deck extension + caster or foot ~0.25 m forward so the
+   support edge moves out past the arm's reach CG. The single biggest fix (tip-limited → safe).
+2. **Drop-down foot** at the front for the locked pick — takes load off the backdrivable
+   motors and extends support (recovers the ~6 N back-drive and part of the lateral hold).
+3. **Mount the arm low and reaching over the wheelbase**; counterweight the rear. Keep the
+   riser as short as the printer plate allows.
+
+With the outrigger + foot it becomes a footed4-lite. Without them it's a drive-only mule.
+
 ## Motor assembly spec (diff2 v0)
 
 - **Drive motors:** 2× NEMA 17 bipolar, ~0.59 N·m holding (e.g. StepperOnline `17HS19-2004S1`).

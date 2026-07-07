@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check tracking-check bridge bridge-check freecad freecad-roundtrip clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check mobile-base-mj mobile-base-mj-check tracking-check bridge bridge-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -20,7 +20,7 @@ view: sim ## alias for `sim` (the arm)
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
 
-check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check tracking-check interference-check layout-check mobile-base-check assemble-check bridge-check ## run every validation gate
+check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check tracking-check interference-check layout-check mobile-base-check mobile-base-mj-check assemble-check bridge-check ## run every validation gate
 
 parts: ## regenerate + validate local build123d parts -> exports/
 	$(PY) scripts/check_parts.py
@@ -138,6 +138,12 @@ mobile-base: ## show the mobile-base design comparison (hold force, tip-over, mo
 
 mobile-base-check: ## validate the mobile-base physics + that a buildable base clears the printer-pick
 	$(PY) scripts/mobile_base_check.py
+
+mobile-base-mj: ## MuJoCo dynamic tip-over: arm reaches out until the base tips (vs analytic)
+	$(PY) sim/mobile_base_mj.py
+
+mobile-base-mj-check: ## validate the dynamic sim tips where the analytic statics predict
+	$(PY) scripts/mobile_base_mj_check.py
 
 tracking-check: ## validate CAD-referenced pose tracking (staleness + verify vs nominal)
 	$(PY) scripts/tracking_check.py
