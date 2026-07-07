@@ -73,16 +73,35 @@ relocalisation stack — but it needs three cheap mods before it can *pick*:
 
 With the outrigger + foot it becomes a footed4-lite. Without them it's a drive-only mule.
 
+## Do you even need steppers? (positioning vs. holding)
+
+The wheel motors do **two unrelated jobs** — and a camera helps with only one:
+
+- **Positioning** (reach the dock pose): a camera closing the loop (AprilTag / overhead cam →
+  visual servo, the `Floor.fix()` re-anchor) beats stepper open-loop, which is *already* a lie
+  on wheels (slip → odometry drift; mecanum/omni are worse). **So skip steppers here** — use a
+  **DC gearmotor + encoder + vision**. The encoder is the fast inner velocity loop + dead-reckon
+  between camera frames; the camera is the accurate outer loop that resets base-pose staleness.
+- **Holding** (resist the arm's reaction when parked): a camera can *detect* motion but can't
+  *resist* it — holding is mechanical, and the model already shows **tip-over binds, not motor
+  hold**, so no motor stops it. Lock with a **brake / worm / deployable foot**, not detent.
+
+**Decision:** *drive cheap + closed-loop by vision; lock mechanically.* This decouples the two
+jobs and is cheaper and more reliable than steppers-that-also-hold. Steppers only re-enter if
+you ever run **open-loop without a camera** — then their holding detent and step-count matter.
+
 ## Motor assembly spec (diff2 v0)
 
-- **Drive motors:** 2× NEMA 17 bipolar, ~0.59 N·m holding (e.g. StepperOnline `17HS19-2004S1`).
-  The arm is light — drive needs only ~0.05 N·m; the motor is sized for **holding**, not go.
-- **Reduction:** 5:1 planetary gearbox per motor (StepperOnline `PG` series) or an HTD-3M belt
-  reduction. Raises wheel holding to ~2.3 N·m → ~45 N/wheel back-drive resistance (above slide).
-- **Rigid-lock option (recommended):** a non-backdrivable **worm gearmotor**, a powered-off
-  **brake**, or a **drop foot** — any removes reliance on energized stepper detent for the pick.
-- **Closed-loop upgrade:** MKS `SERVO42/57` or StepperOnline `iHSS` closed-loop steppers hold
-  position actively (won't silently slip poles under overload) — worth it once loads grow.
+- **Drive motors:** 4× (or 2×) DC **gearmotor with a quadrature encoder** (e.g. 25GA-370 /
+  37Dx… 12–24 V, ~0.2–0.5 N·m output). Drive needs only ~0.05 N·m — motors are sized for
+  controllability, not go. Closed-loop by encoder + camera; no micro-stepping precision needed.
+- **Lock for the pick (do NOT rely on the drive motors):** a **deployable foot** (servo/linear
+  actuator + rubber pad) that lifts the base onto rigid hard points, or a **worm gearmotor** /
+  **parking brake**. This is what actually resists the arm; it's independent of the drive choice.
+- **If you go open-loop (no camera):** then use **NEMA 17 + 5:1 planetary** steppers — the
+  holding detent + step count are the whole point. Sized for holding, ~2.3 N·m at the wheel.
+- **Middle ground:** MKS `SERVO42/57` closed-loop steppers hold actively (won't slip poles) —
+  worth it only if you want stepper-style holding without an external brake.
 - **Wheels:** 100 mm — solid rubber/PU drive wheels for diff2; a 100 mm mecanum/omni **set**
   for the holonomic builds. Heavy-duty swivel **caster** (≈2 in) front, rated ≥ base mass.
 - **Drivers:** TMC2209/TMC5160 (SilentStepStick) on a 3D-printer-class board (BTT SKR) or
