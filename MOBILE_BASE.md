@@ -93,6 +93,26 @@ to wheels. The model (`mobile_base.py`) on this config vs. the printer-pick:
   bigger wheels trade CG height for speed. Holding is strong (geared servo, ~2.9 N·m output), so
   tip-over binds, not the motors — still add a drop-foot if a stuck-part pull exceeds the tip hold.
 
+## Software: LeRobot already does this — adapt LeKiwi, don't start from scratch
+
+LeRobot ships a mobile-manipulator robot, **LeKiwi** (`lerobot/robots/lekiwi/`), that is
+almost exactly this build: a mobile base + a follower arm on **one `FeetechMotorsBus`** — arm
+IDs 1–6 in `POSITION` mode, base wheels IDs 7–9 in `VELOCITY` (wheel) mode. It gives you, for
+free: bus setup, per-motor mode config (`configure()` sets arm→POSITION, wheels→VELOCITY with
+PID), the deg/s ↔ raw conversion (`_degps_to_raw`, `steps_per_deg = 4096/360`), calibration, and
+a **client/host teleop split** (`lekiwi_client.py` / `lekiwi_host.py`). Your "just hook 2 more
+servos on the bus" plan *is* LeKiwi.
+
+**The one difference:** LeKiwi is **3-omniwheel holonomic**; you chose **2-wheel differential**.
+So reuse ~90% and swap one function — `_body_to_wheel_raw` — from the 3-omni kinematic matrix to
+a diff-drive map (`v_left = (v − ω·L/2)/r`, `v_right = (v + ω·L/2)/r`), and drop to 2 base motors
+(IDs 7–8). Everything else (bus, wheel mode, velocity plumbing, teleop) carries over unchanged.
+
+Trade-off worth noting: staying with LeKiwi as-is (3 omni wheels) gets you 100% of the software
+and a caster-free holonomic tripod — but omni wheels are hard to print (rollers), and passive
+omni rollers reintroduce the lateral-hold problem. **2 solid printed wheels + 1 caster is the
+easier DIY build**; the small cost is writing the diff-drive kinematics (~10 lines).
+
 ## Do you even need steppers? (positioning vs. holding)
 
 The wheel motors do **two unrelated jobs** — and a camera helps with only one:
