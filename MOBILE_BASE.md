@@ -73,6 +73,26 @@ relocalisation stack — but it needs three cheap mods before it can *pick*:
 
 With the outrigger + foot it becomes a footed4-lite. Without them it's a drive-only mule.
 
+## The chosen v0: 2× STS3215 diff-drive + printed wheels + one front caster
+
+Simplest real build — two more Feetech servos on the arm's bus (wheel mode, IDs 7–8), 3D-printed
+wheels on the servo horns, one caster. No microcontroller, no motor drivers, one protocol from arm
+to wheels. The model (`mobile_base.py`) on this config vs. the printer-pick:
+
+- **Caster count: one FRONT caster (tricycle), not two.** Two rigid casters + two rigid wheels is
+  4 coplanar contacts = over-constrained → it **see-saws** on any uneven floor, dropping the front
+  or rear caster mid-rock exactly when the arm is reaching. A single caster is a statically-
+  determinate tripod that never rocks; place it forward (~0.22 m) as the outrigger so `x_front`
+  clears the reach. Both configs pass forward hold (~24–27 N, tip-limited); the tricycle wins on
+  robustness. Add a rear caster ONLY for hard rearward pulls, and make it **sprung** (or run the
+  drive wheels slightly proud) so casters are anti-tip outriggers, not a rigid 4th leg.
+- **The binding risk is lateral, not the caster:** a 0.30 m riser over a ~0.22 m track trips the
+  "CG height > half-track" warning → tips sideways in a turn. **Widen the wheel track** and keep
+  the **riser as low** as the printer plate allows. Put the drive axle under the arm/CG (traction).
+- **Speed:** STS3215 direct-drive @35 mm wheel ≈ **0.18 m/s** — fine for docking, slow to traverse;
+  bigger wheels trade CG height for speed. Holding is strong (geared servo, ~2.9 N·m output), so
+  tip-over binds, not the motors — still add a drop-foot if a stuck-part pull exceeds the tip hold.
+
 ## Do you even need steppers? (positioning vs. holding)
 
 The wheel motors do **two unrelated jobs** — and a camera helps with only one:
