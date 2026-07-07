@@ -37,8 +37,9 @@ versioned and regenerable.
 parts/         # build123d part scripts authored here (each exposes `part`)
 assemblies/    # partcad assemblies-as-code (composition + positions)
 sim/           # cells: workcell, printer, wirebender, press, toolchanger, SO-101, foil former + LOM
+               #   + interference.py: solid part interference / swept-collision checking
 featuretree/   # feature-IR -> editable FreeCAD/Onshape tree, round-tripped by name
-orchestration/ # op-graph + scheduler + CAM toolpath + end-to-end assemble driver
+orchestration/ # op-graph + scheduler + CAM toolpath (bead/insert/pick-place) + assemble driver
 calibration/   # the reality leg: calibrated parameter vector + staleness stamp + writeback
 tracking/      # world model: CAD-referenced part-pose tracking + staleness + verify
 bridge/        # compose so101-lab by reference: real Placo motion, built-in IK fallback

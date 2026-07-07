@@ -1,8 +1,12 @@
 """toolpath.py — CAM: a Cartesian tool path + the motion bridge to joint space.
 
-A Toolpath is an ordered list of tool-tip targets (the CAM output — e.g. a glue bead
-resampled along its path). `to_joint_traj` runs each target through an IK solver to
-joint waypoints (motion control).
+A Toolpath is an ordered list of tool-tip targets (the CAM output). One generator per
+operation — `bead_toolpath` (dispense along a seam), `insert_toolpath` (plunge for a
+press / peg-in-hole), `pick_place_toolpath` (transport with a lift) — each returns the
+same (poses + per-point normals) shape, so motion and interference checking are uniform
+across operations. `to_joint_traj` runs each target through an IK solver to joint
+waypoints (motion control); `interference.transforms_along` turns the same poses into a
+swept collision check.
 
 The solver is PLUGGABLE. The built-in positional DLS IK (sim/ik.py) keeps the gates
 self-contained; **Placo** (QP, orientation-aware) drops in for real toolpath following,
@@ -51,6 +55,32 @@ def bead_toolpath(bead_points_mm, origin_xyz, label="bead", step_mm=STEP_MM):
     poses = [tuple(o + np.array([(px - c[0]) / 1000.0, (py - c[1]) / 1000.0, 0.0]))
              for (px, py) in pts]
     normals = [(0.0, 0.0, 1.0)] * len(poses)           # bead laid down onto a flat surface
+    return Toolpath(poses, label, normals)
+
+
+def insert_toolpath(seat_xyz, approach_mm=25.0, axis=(0, 0, 1), label="insert", step_mm=STEP_MM):
+    """A straight plunge for press / peg-in-hole / bearing-seat ops: descend along -axis
+    from approach_mm above the seat down to the seat. Normals point back up +axis (the
+    insertion direction the tool holds). Feeds interference.sweep for a clearance check."""
+    ax = np.asarray(axis, float)
+    ax = ax / (np.linalg.norm(ax) or 1.0)
+    seat = np.asarray(seat_xyz, float)
+    start = seat + ax * (approach_mm / 1000.0)
+    poses = _resample([tuple(start), tuple(seat)], step_mm)
+    normals = [tuple(ax)] * len(poses)
+    return Toolpath(poses, label, normals)
+
+
+def pick_place_toolpath(pick_xyz, place_xyz, safe_z_mm=40.0, label="pick_place", step_mm=STEP_MM):
+    """Transport a part pick -> place with a lift over obstacles: up to a safe plane,
+    across, then straight down onto the target. The path the *carried part* sweeps for
+    interference against the scene (ignore the part itself when checking)."""
+    pick, place = np.asarray(pick_xyz, float), np.asarray(place_xyz, float)
+    dz = safe_z_mm / 1000.0
+    over_pick = pick + np.array([0.0, 0.0, dz])
+    over_place = place + np.array([0.0, 0.0, dz])
+    poses = _resample([tuple(pick), tuple(over_pick), tuple(over_place), tuple(place)], step_mm)
+    normals = [(0.0, 0.0, 1.0)] * len(poses)
     return Toolpath(poses, label, normals)
 
 

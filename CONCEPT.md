@@ -258,19 +258,28 @@ sample assembly runs the whole stack (`orchestration/assemble.py`):
    mates in the work datum frame. The STEP/CAD assembly is both the **plan** (where each
    part goes) and the **check** (did it land there).
 2. **Plan** — an op-graph over arm/tool/cure resources (§6).
-3. **CAM** — a process op becomes a **toolpath** (`orchestration/toolpath.py`): e.g. the
-   glue bead resampled into an ordered list of tool-tip targets.
-4. **Motion** — the toolpath is solved to joint waypoints by IK. The solver is
+3. **CAM** — a process op becomes a **toolpath** (`orchestration/toolpath.py`): one
+   generator per operation — `bead` (dispense along a seam), `insert` (plunge for a
+   press / peg-in-hole), `pick_place` (transport with a lift) — each an ordered list of
+   tool-tip targets + per-point normals, so motion and interference are uniform across ops.
+4. **Clearance** — before any motion runs, the toolpath is a **swept solid-interference
+   check** (`sim/interference.py`): the tool (or carried part) mesh is stepped along the
+   path and boolean-intersected against the workpiece/fixtures. It answers what a toolpath
+   alone can't — *does the moving solid foul anything* — and returns the first colliding
+   waypoint so motion stops before it. Self-contained (AABB broad phase → manifold3d
+   narrow phase, no fcl); a mesh that can't be closed for the boolean falls back to its
+   convex hull and is flagged `approximate` — **conservative, never a silent clear.**
+5. **Motion** — the toolpath is solved to joint waypoints by IK. The solver is
    **pluggable**: a built-in positional DLS solver (`sim/ik.py`) keeps everything
    self-contained; **Placo** (QP, orientation-aware) drops in for real following, where
    the tool must stay normal to the surface along the path.
-5. **Execute + track** — the world model (`tracking/`) follows every part: which arm
+6. **Execute + track** — the world model (`tracking/`) follows every part: which arm
    holds it, its estimated pose, and **pose staleness** — a grasped part carried without
    being re-observed drifts to `EXTRAPOLATING` (dead-reckoned from arm FK), and an
    observation re-anchors it to `FRESH`. This is the calibration layer's staleness idea
    (§4/`calibration/`) applied to 6-DoF pose. Camera-agnostic: fed by simulated
    observations now, a real fiducial / CAD-pose estimator later.
-6. **Verify** — every placed part's tracked pose is checked against the CAD-nominal
+7. **Verify** — every placed part's tracked pose is checked against the CAD-nominal
    within tolerance. The CAD file closes the loop.
 
 **Repo boundary.** Motion *execution* on the real leader/follower arms lives in the
