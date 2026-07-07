@@ -219,9 +219,21 @@ Goal: close the sim-to-real gap on real hardware.
       on the shear's coupling; the vehicle for the coordination task above.
 - [ ] Drive the coordination sim with the real leader/follower arms (compose so101-lab
       by reference); measure real hold stability + bead placement vs. sim.
-- [ ] Add mobile base (planar/free joint) in MuJoCo; apply coarse-by-base /
-      fine-by-datum control.
-- [ ] Fiducial-based local relocalization for fine ops after base moves.
+- [x] **Material-handling floor** (`sim/station.py`, `scripts/layout_check.py`) — the
+      *generic* mobile carrier, not just an arm base: a `Station` holds any payload
+      (workpiece, parts bin, printer, tool, arm) on a shared floor. A station is a solid,
+      so a base move is a **swept-solid interference check** (reuses `sim/interference.py`):
+      `move`/`route` refuse a lane that would foul another station and name the blocker;
+      `stage_into_envelope` routes a material carrier around obstacles into an arm's work
+      envelope; `reachable` is the envelope test. Base pose goes STALE by odometry drift
+      and re-anchors on a floor fiducial (`fix`) — the calibration staleness discipline on
+      the floor frame.
+- [ ] Realize the floor in MuJoCo (planar/free base joint) + coarse-by-base / fine-by-datum
+      control; today `station.py` is the geometric floor planner (poses + footprints).
+- [ ] Fiducial-based local relocalization for fine ops after base moves (the real
+      observation source behind `Floor.fix`).
+- [ ] Schedule station moves as op-graph resources (a floor "lane" / dock as a resource);
+      let the scheduler overlap material-in staging with in-envelope work.
 - [ ] Pre-heat scheduling: keep the glue tool hot at the dock; amortize the ~2 min
       heat across many joints (pipeline the coordination task).
 
@@ -282,6 +294,62 @@ first-class cells reusing the op-graph + calibration layer:
       photoconductor (a-Se / ZnO) latent image → charged powder → fuse. Bitmap-per-layer
       program (shared with MSLA); reuses a resin-printer LCD + a laser-printer drum/corona.
       Polymer first (cf. Evolve STEP); metal sintering is a stretch.
+
+## Phase 10 — Provenance & the trust ledger (signed, immutable work receipts)
+
+Goal: an immutable, cryptographically-signed record of **what was done, by which machine,
+when, and under what trust state** — extended to materials, suppliers, and parts ordering.
+The manufacturing "black box recorder." Fits the existing writeback-as-a-reviewable-diff
+discipline (`calibration/measure.py`), now made tamper-evident and supply-chain-wide.
+
+- [ ] **Work receipt** = a signed record of one op: `{op, machine_id, tool, input
+      receipts[], calibration anchor (builds-since-anchor + FRESH/STALE/PREDICTION at
+      build time), param snapshot, output part id, measurements, timestamps}`. The
+      calibration anchor is the point — a receipt records the *trust state* an op ran
+      under, not just the action (a weld made on FRESH, in-envelope params ≠ one on
+      EXTRAPOLATING).
+- [ ] **Content-addressed + hash-linked**: receipt id = SHA-256 of its canonical JSON;
+      each receipt references the hashes of its input receipts → a **provenance DAG** (a
+      part's full "bill of process" back to raw material lots). Append-only object store,
+      git-like; `ed25519` signatures (`cryptography` is available).
+- [ ] **Materials & suppliers as leaf receipts**: a supplier signs a material-lot cert
+      (alloy/heat/mill cert); receiving logs a signed goods-in receipt linking PO → lot;
+      a parts order (PO) is itself a signed record. Closes the loop with Phase 8 sourcing.
+- [ ] **`provenance verify <part>`**: walk the DAG — every signature valid, every hash
+      link intact, every material lot backed by a supplier cert. Produces the verifiable
+      trust chain (and its gaps).
+- [ ] New `provenance/` module + `provenance-check` gate; optional external timestamp
+      anchoring (RFC-3161 / a public chain) only if non-repudiation demands it — local-first.
+
+## Phase 11 — Safe autonomy: the andon line (advanced)
+
+Goal (advanced / forward-looking, cf. **Safe Autonomous Organizations**, andonlabs.com):
+a process "line" that self-corrects **safely, reasonably, and within explicit bounds** —
+answering *how far the system may keep a process running without a human*. The andon-cord
+metaphor is native to this domain: any station (or the autonomous policy) can **stop the
+line**; the hard question is when it must, and what it may do on its own before then.
+
+- [ ] **Autonomy policy over the signals we already emit**: keep running while calibration
+      is `FRESH` + in-envelope, pose staleness is `FRESH`, interference is clear, and
+      provenance verifies; **pull the andon cord to a human** on `EXTRAPOLATING` /
+      `PREDICTION` params, an unsigned material lot, an interference foul, or an
+      out-of-envelope measurement. The staleness stamps (Phase 6/§4) are exactly this
+      policy's evidence — the safety layer is a *consumer* of the trust ledger, not new
+      instrumentation.
+- [ ] **Graded autonomy ladder**: observe-only → propose-diff-for-review (today's
+      writeback) → act-within-envelope-and-log → act-and-notify. Each rung names what the
+      line may do un-attended and what it must escalate; the rung is chosen per op by its
+      risk + reversibility.
+- [ ] **Bounded self-correction**: permitted corrective actions are declared and
+      envelope-limited (re-anchor a pose, re-home, retry within tolerance, re-source a
+      shorted material) — never open-ended. Every autonomous action writes a signed
+      receipt (Phase 10), so the andon record is auditable after the fact.
+- [ ] **Stop-the-line semantics**: a halt is safe (leaves the cell in a recoverable
+      state), attributable (who/what pulled it, why), and resumable only through a signed
+      human acknowledgement. Persisted processes get a declared "how long may this run
+      un-attended" budget with a dead-man check.
+- [ ] Ethics/reasonableness constraints as explicit, reviewable rules — not emergent;
+      the policy is code + config in the ledger, versioned and diffable like everything else.
 
 ## Cross-cutting / ongoing
 
