@@ -20,6 +20,9 @@ N_ROLLERS = 5       # rollers PER ROW — count them on the real wheel. MEASURE
 MOUNT_R = 22.0      # roller-axis distance from wheel centre (pitch). MEASURE
 PIN_D = 3.0         # axle pin (3 mm dowel / M3)
 ROLLER_BORE = 3.4   # roller spins on the pin -> bore > pin
+HUB_PIN_BORE = 3.2  # round seat the pin snaps INTO (holds the pin; the roller spins on it)
+PIN_SNAP_MOUTH = 2.5  # radial entry throat, NARROWER than the pin -> lips flex, pin snaps past &
+#                       is retained. throat < PIN_D is the snap; the round seat wraps past centerline.
 ROLLER_SAMPLES = 28
 ROLLER_GAP_MM = 10.0  # tangential gap between rollers in a row -> room for the hub + spin clearance
 ROWS = 2              # two axially-offset, half-pitch-staggered rows -> continuous contact

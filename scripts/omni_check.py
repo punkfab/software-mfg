@@ -49,6 +49,12 @@ def main() -> int:
     if not cont["continuous"]:
         problems.append(f"contact NOT continuous: {cont}")
 
+    # snap-fit retention: throat narrower than the pin (snaps + retains), seat >= pin
+    if o.PIN_SNAP_MOUTH >= o.PIN_D:
+        problems.append(f"snap throat {o.PIN_SNAP_MOUTH} must be < pin {o.PIN_D} to retain it")
+    if o.HUB_PIN_BORE < o.PIN_D:
+        problems.append(f"hub pin seat {o.HUB_PIN_BORE} must be >= pin {o.PIN_D}")
+
     hub = trimesh.load(str(BUILD / "omni_hub.stl"))
     roller = trimesh.load(str(BUILD / "omni_roller.stl"))
     for nm, m in (("hub", hub), ("roller", roller)):
@@ -76,6 +82,8 @@ def main() -> int:
           f"{2*o.BARREL_MAX:.0f}mm, width {w[2]:.0f}mm, pin {o.PIN_D}mm")
     print(f"  continuity: coverage {cont['coverage_deg']}deg >= need {cont['need_deg']}deg "
           f"(margin {cont['margin']}x) -> rolls without bumping")
+    print(f"  pin: snap throat {o.PIN_SNAP_MOUTH}mm < pin {o.PIN_D}mm (retains by "
+          f"{o.PIN_D-o.PIN_SNAP_MOUTH:.1f}mm), seats in {o.HUB_PIN_BORE}mm bore")
     print(f"  hub {w}  roller {(roller.bounds[1]-roller.bounds[0]).round(1).tolist()}  (watertight)")
     print(f"  assembly interference: {len(inter)} (0 = all {o.ROWS*o.N_ROLLERS} rollers spin free)")
 

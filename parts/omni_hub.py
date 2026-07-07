@@ -15,7 +15,8 @@ from build123d import *
 
 sys.path.insert(0, os.path.dirname(__file__))
 from _omni import (BARREL_MAX, HALF_L, HORN_BC_D, HORN_N, HORN_SCREW, HUB_BORE,  # noqa: E402
-                   MOUNT_R, N_ROLLERS, PIN_D, ROLLER_SAMPLES, ROW_Z, ROWS, rho, roller_center)
+                   HUB_PIN_BORE, MOUNT_R, N_ROLLERS, PIN_SNAP_MOUTH, R_EFF, ROLLER_SAMPLES,
+                   ROW_Z, ROWS, rho, roller_center)
 
 CLR = 1.0                                  # roller spin clearance (pocket = barrel + CLR)
 CLEAR_R = MOUNT_R + 3.0                     # blank radius: holds pins, stays inside the roller OD
@@ -50,11 +51,17 @@ def _build():
         a = 2 * math.pi * k / HORN_N
         hub -= Pos((HORN_BC_D / 2) * math.cos(a), (HORN_BC_D / 2) * math.sin(a), 0) * \
             Cylinder(HORN_SCREW / 2, FRAME_H + 2)
-    for row in range(ROWS):                            # a tangent pin hole per roller
+    rad_out = R_EFF + 2 - MOUNT_R                       # throat reaches from the pin out past the OD
+    for row in range(ROWS):                            # a SNAP-FIT pin seat per roller
         for i in range(N_ROLLERS):
             (cx, cy, cz), deg = roller_center(i, row)
-            hub -= Pos(cx, cy, cz) * Rot(0, 0, deg) * Rot(90, 0, 0) * \
-                Cylinder(PIN_D / 2, 2 * (HALF_L + 8))
+            frame = Pos(cx, cy, cz) * Rot(0, 0, deg)   # local X = radial out, Y = tangent, Z = axial
+            # round seat the pin snaps into (wraps past its centerline -> retains)
+            hub -= frame * Rot(90, 0, 0) * Cylinder(HUB_PIN_BORE / 2, 2 * (HALF_L + 8))
+            # radial entry throat, narrower than the pin (Z gap = PIN_SNAP_MOUTH): the lips flex,
+            # the pin snaps past them into the seat
+            hub -= frame * Box(rad_out, 2 * (HALF_L + 8), PIN_SNAP_MOUTH,
+                               align=(Align.MIN, Align.CENTER, Align.CENTER))
     return hub
 
 
