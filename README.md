@@ -8,6 +8,7 @@ shearing, 3D printing, heat-set inserts) using small robot arms — improving th
 design and the process automatically as it solidifies.
 
 - **North star (Manufacturing for Design):** [NORTH_STAR.md](./NORTH_STAR.md)
+- **Clean-manufacturing thesis (the green case):** [CLEAN_MFG.md](./CLEAN_MFG.md)
 - **Vision & architecture:** [CONCEPT.md](./CONCEPT.md)
 - **Roadmap:** [PLAN.md](./PLAN.md)
 - **Process design space (survey):** [PROCESS_SURVEY.md](./PROCESS_SURVEY.md)
