@@ -7,9 +7,11 @@ and orchestrates multi-step / multi-process physical builds (CNC wire bending,
 shearing, 3D printing, heat-set inserts) using small robot arms — improving the
 design and the process automatically as it solidifies.
 
+- **North star (Manufacturing for Design):** [NORTH_STAR.md](./NORTH_STAR.md)
 - **Vision & architecture:** [CONCEPT.md](./CONCEPT.md)
 - **Roadmap:** [PLAN.md](./PLAN.md)
 - **Process design space (survey):** [PROCESS_SURVEY.md](./PROCESS_SURVEY.md)
+- **Mobile base + scanning surveys:** [MOBILE_BASE.md](./MOBILE_BASE.md) · [SCANNING_SURVEY.md](./SCANNING_SURVEY.md)
 
 ## Core idea
 

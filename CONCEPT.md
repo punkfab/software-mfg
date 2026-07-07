@@ -9,6 +9,10 @@ machines (a CNC wire bender, a 3D printer, shears, drivers, insert presses)
 cooperate to build multi-step, multi-process assemblies — and where the *design
 and the process improve themselves* as the design solidifies.
 
+The strategic frame and its vocabulary — **Manufacturing for Design**, *Design as
+Search*, *sweep the envelope*, *Test-Driven Fabrication* — live in
+[NORTH_STAR.md](./NORTH_STAR.md).
+
 The north star: **rapid physical prototyping that loops like Claude Code** —
 propose a design/assembly, evaluate it, refine it — but grounded in the reality
 that atoms are slow and semi-irreversible.
