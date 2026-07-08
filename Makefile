@@ -157,7 +157,9 @@ scanning: ## demo 3D scanning: scan -> register to CAD -> recover pose + as-buil
 scanning-check: ## validate scan->CAD pose recovery (multi-view) + as-built deviation + re-anchor
 	$(PY) scripts/scanning_check.py
 
-omni: ## assemble the reverse-engineered omni wheel (hub + rollers + pins) -> build/omni_assembly.stl
+omni: ## build the omni wheel STLs (roller + hub) + the assembly -> build/omni_*.stl
+	$(PY) parts/omni_roller.py
+	$(PY) parts/omni_hub.py
 	$(PY) scripts/omni_demo.py
 
 omni-check: ## validate the reverse-engineered omni wheel (assembles, rollers spin free, OD=R_EFF)

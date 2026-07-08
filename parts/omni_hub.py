@@ -19,7 +19,9 @@ from _omni import (BARREL_MAX, HALF_L, HORN_BC_D, HORN_N, HORN_SCREW, HUB_BORE, 
                    ROW_Z, ROWS, rho, roller_center)
 
 CLR = 1.0                                  # roller spin clearance (pocket = barrel + CLR)
-CLEAR_R = MOUNT_R + 3.0                     # blank radius: holds pins, stays inside the roller OD
+# blank radius: MUST reach well past the pitch circle so the tangent pins stay inside the
+# material long enough to cut a real snap lip (pin exits the blank at s=sqrt(CLEAR_R^2-MOUNT_R^2)).
+CLEAR_R = MOUNT_R + 5.0                     # +5 -> ~4.7mm of post depth per pin end (stays < R_EFF)
 FRAME_H = 2 * (ROW_Z + BARREL_MAX) + 4      # Z height: spans both rows of barrels
 
 
@@ -52,15 +54,20 @@ def _build():
         hub -= Pos((HORN_BC_D / 2) * math.cos(a), (HORN_BC_D / 2) * math.sin(a), 0) * \
             Cylinder(HORN_SCREW / 2, FRAME_H + 2)
     rad_out = R_EFF + 2 - MOUNT_R                       # throat reaches from the pin out past the OD
+    big = 2 * R_EFF
     for row in range(ROWS):                            # a SNAP-FIT pin seat per roller
         for i in range(N_ROLLERS):
             (cx, cy, cz), deg = roller_center(i, row)
             frame = Pos(cx, cy, cz) * Rot(0, 0, deg)   # local X = radial out, Y = tangent, Z = axial
-            # round seat the pin snaps into (wraps past its centerline -> retains)
-            hub -= frame * Rot(90, 0, 0) * Cylinder(HUB_PIN_BORE / 2, 2 * (HALF_L + 8))
-            # radial entry throat, narrower than the pin (Z gap = PIN_SNAP_MOUTH): the lips flex,
-            # the pin snaps past them into the seat
-            hub -= frame * Box(rad_out, 2 * (HALF_L + 8), PIN_SNAP_MOUTH,
+            pinlen = 2 * (HALF_L + 8)
+            # INBOARD half of the round seat only (dr<=0) — the pin's nest. Keeping it to the
+            # inboard side means it does NOT swallow the outboard retaining lips.
+            seat = frame * Rot(90, 0, 0) * Cylinder(HUB_PIN_BORE / 2, pinlen)
+            inboard = frame * Box(big, pinlen + 2, big, align=(Align.MAX, Align.CENTER, Align.CENTER))
+            hub -= seat & inboard
+            # OUTBOARD entry throat, narrower than the pin (z gap = PIN_SNAP_MOUTH): its lips
+            # survive (no wide seat here) and snap over the pin's outboard face -> retained.
+            hub -= frame * Box(rad_out, pinlen, PIN_SNAP_MOUTH,
                                align=(Align.MIN, Align.CENTER, Align.CENTER))
     return hub
 

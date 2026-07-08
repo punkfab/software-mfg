@@ -34,6 +34,24 @@ def roller_xform(i, row):
             @ trimesh.transformations.rotation_matrix(np.radians(90), [1, 0, 0]))
 
 
+def pin_retention(hub):
+    """Probe the pin pocket: outboard of the pin the entry throat must be NARROWER than the
+    pin (the lips that snap over it). Returns the max grip (pin_width - throat) found, in mm."""
+    (cx, cy, cz), deg = o.roller_center(0, 0)
+    a = np.radians(deg)
+    tang = np.array([-np.sin(a), np.cos(a), 0.]); rad = np.array([np.cos(a), np.sin(a), 0.])
+    Pc = np.array([cx, cy, cz]); s = o.HALF_L + 2.0
+    best = -9.9
+    for dr in (0.25, 0.5, 0.75):
+        dzs = np.linspace(-3, 3, 241)
+        inside = hub.contains(np.array([Pc + tang * s + rad * dr + np.array([0, 0, d]) for d in dzs]))
+        openz = dzs[~inside]
+        gap = (openz.max() - openz.min()) if len(openz) else 0.0
+        pin_w = 2 * np.sqrt(max(0.0, (o.PIN_D / 2) ** 2 - dr ** 2))
+        best = max(best, pin_w - gap)          # >0 means the throat grips the pin here
+    return best
+
+
 def main() -> int:
     problems = []
     for name in ("omni_roller", "omni_hub"):
@@ -77,13 +95,17 @@ def main() -> int:
         problems.append(f"assembly interferes (rollers can't spin): "
                         f"{[(h['pair'], h['volume_mm3']) for h in inter[:4]]}")
 
+    grip = pin_retention(hub)                  # the throat must actually snap over the pin
+    if grip < 0.15:
+        problems.append(f"pin NOT retained: throat wider than the pin outboard (grip {grip:.2f}mm)")
+
     w = (hub.bounds[1] - hub.bounds[0]).round(1).tolist()
     print(f"omni wheel: {o.ROWS} rows x {o.N_ROLLERS} rollers, OD {2*maxr:.0f}mm, barrel "
           f"{2*o.BARREL_MAX:.0f}mm, width {w[2]:.0f}mm, pin {o.PIN_D}mm")
     print(f"  continuity: coverage {cont['coverage_deg']}deg >= need {cont['need_deg']}deg "
           f"(margin {cont['margin']}x) -> rolls without bumping")
-    print(f"  pin: snap throat {o.PIN_SNAP_MOUTH}mm < pin {o.PIN_D}mm (retains by "
-          f"{o.PIN_D-o.PIN_SNAP_MOUTH:.1f}mm), seats in {o.HUB_PIN_BORE}mm bore")
+    print(f"  pin: Ø{o.PIN_D}mm, snaps past a {o.PIN_SNAP_MOUTH}mm throat into a {o.HUB_PIN_BORE}mm "
+          f"seat, lips grip its outboard face by {grip:.2f}mm")
     print(f"  hub {w}  roller {(roller.bounds[1]-roller.bounds[0]).round(1).tolist()}  (watertight)")
     print(f"  assembly interference: {len(inter)} (0 = all {o.ROWS*o.N_ROLLERS} rollers spin free)")
 
