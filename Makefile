@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check mobile-base-mj mobile-base-mj-check feetech feetech-check scanning scanning-check omni omni-check tracking-check bridge bridge-check freecad freecad-roundtrip clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check mobile-base-mj mobile-base-mj-check feetech feetech-check scanning scanning-check omni omni-check lekiwi lekiwi-demo lekiwi-check tracking-check bridge bridge-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -164,6 +164,15 @@ omni: ## build the omni wheel STLs (roller + hub) + the assembly -> build/omni_*
 
 omni-check: ## validate the reverse-engineered omni wheel (assembles, rollers spin free, OD=R_EFF)
 	$(PY) scripts/omni_check.py
+
+lekiwi: ## INTERACTIVE viewer: the exact LeKiwi (3-omni base + SO-101), composed by reference
+	$(PY) sim/lekiwi_sim.py
+
+lekiwi-demo: ## headless: LeKiwi drives holonomically + arm reaches -> build/lekiwi/lekiwi.gif
+	$(PY) sim/lekiwi_sim.py --demo
+
+lekiwi-check: ## validate the exact LeKiwi sim (loads, stands, drives holonomically, upright)
+	$(PY) sim/lekiwi_sim.py --selftest
 
 tracking-check: ## validate CAD-referenced pose tracking (staleness + verify vs nominal)
 	$(PY) scripts/tracking_check.py
