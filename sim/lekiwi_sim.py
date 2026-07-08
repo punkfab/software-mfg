@@ -192,10 +192,11 @@ def demo():
 
 
 def interactive():
+    from mujoco import viewer         # bind `viewer` (not `mujoco`) so the global stays visible
     p = Params()
-    model = build_model(p); data = mujoco.MjData(model)
-    import mujoco.viewer
-    mujoco.viewer.launch(model, data)
+    model = build_model(p)
+    data = mujoco.MjData(model)
+    viewer.launch(model, data)
 
 
 if __name__ == "__main__":
