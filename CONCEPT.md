@@ -205,6 +205,19 @@ Arm performs its own tool changes, picking process tools off a rack.
 - **Cross-interface power/comms is half the design.** Tools are *powered*
   (self-actuated). Carry power/signal across the coupling with **pogo pins**,
   which benefit from the kinematic repeatability. Optionally pneumatics.
+- **Key the seat to ONE orientation.** Space the 3 vees UNEQUALLY (80/210/330°)
+  so the tool drops in exactly one clocking — that keys the pogo polarity and jaw
+  direction, so a *single* pogo set suffices (no androgynous duplication). A
+  controlled cell doesn't need HOTDOCK's 90°-symmetry/wide-capture geometry.
+- **Secure attach = registration + a load path at the right radius** (reading of
+  HOTDOCK, IAC-20). The magnet only *triggers*; the mechanical catch carries load
+  and fails locked. The binding limit is a prying moment that GAPS the seat open
+  and loses registration — the coupling's "tip-over" — at `M_liftoff = preload ×
+  radius`. `sim/coupling_statics.py` scores it (min-of-modes, like the mobile
+  base): for a light SO-101 tool the central Fidlock catch alone clears the
+  service moment (~×1.6), so a rim/circumference lock (HOTDOCK's "locking ring")
+  is a **margin upgrade** (~×3.4 + tighter repeatability), not a requirement.
+  `make coupling-check`. PREDICTION until a bench pull-test anchors the numbers.
 
 ### 5.3 Process tools (self-actuated)
 - **Shear** — solves the wire bender's missing integrated cutter. Mounted as an
