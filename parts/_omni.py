@@ -32,11 +32,12 @@ ROLLER_GAP_MM = 10.0  # tangential gap between rollers in a row -> room for the 
 ROLLER_HALF_L = None
 ROWS = 2              # two axially-offset, half-pitch-staggered rows -> continuous contact
 
-# drive interface to the STS3215 horn (same approach as parts/base_wheel.py) — MEASURE horn
-HUB_BORE = 8.5
-HORN_BC_D = 16.0
-HORN_N = 4
-HORN_SCREW = 2.7
+# drive interface to the STS3215 horn — from the ST-3215-C047 datasheet (§11 accessories horn):
+# horn OD Ø19.95, hub Ø9, bolt circle Ø14, 4× Ø3.2 (M3), 25T/Ø5.9 spline, M3×6 retaining screw.
+HUB_BORE = 9.2       # clears the horn's Ø9 hub boss
+HORN_BC_D = 14.0     # datasheet Ø14 bolt circle
+HORN_N = 4           # datasheet 4-M3
+HORN_SCREW = 3.4     # M3 clearance (horn holes are Ø3.2; wheel bolts through)
 
 FULL_HALF_L = MOUNT_R * math.tan(math.pi / N_ROLLERS)     # where rollers would just meet
 # derived length (rollers nearly meet, minus a hub gap) unless a measured length overrides it

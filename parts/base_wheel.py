@@ -26,15 +26,16 @@ ORING_CS = 3.0        # O-ring cross-section stock; groove seats it ~1mm proud
 N_GROOVES = 2
 GROOVE_INSET = 6.0    # first groove this far from each face
 
-# --- STS3215 horn interface (MEASURE + set these to your servo/horn) ---
-HORN_RECESS_D = 25.0  # pocket the servo horn/boss registers into (concentric)
-HORN_RECESS_DEPTH = 3.5
-CENTER_BORE = 8.5     # clears the output-shaft boss
-CENTER_CBORE_D = 7.0  # outer-face counterbore so you can reach the central retaining screw
+# --- STS3215 horn interface (from the ST-3215-C047 datasheet, §11 accessories horn:
+#     horn OD Ø19.95, hub Ø9, bolt circle Ø14, 4× Ø3.2 (M3), 25T/Ø5.9 spline, M3×6 screw) ---
+HORN_RECESS_D = 20.5  # pocket the Ø19.95 horn disc registers into (+ ~0.5 fit)
+HORN_RECESS_DEPTH = 3.0  # datasheet horn is ~2.1 mm thick (round disc) + hub
+CENTER_BORE = 9.2     # clears the horn's Ø9 hub boss
+CENTER_CBORE_D = 7.0  # outer-face counterbore so you can reach the central M3×6 retaining screw
 CENTER_CBORE_DEPTH = 6.0
-HORN_BC_D = 16.0      # bolt circle of the horn screws
-HORN_N = 4            # number of horn screws
-HORN_SCREW_CLR = 2.7  # M2.5 clearance
+HORN_BC_D = 14.0      # datasheet Ø14 bolt circle
+HORN_N = 4            # datasheet 4-M3
+HORN_SCREW_CLR = 3.4  # M3 clearance (horn holes are Ø3.2; wheel bolts through)
 
 
 def _build():
