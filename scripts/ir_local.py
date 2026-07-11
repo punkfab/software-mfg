@@ -46,5 +46,27 @@ def coupling_plate():
     )
 
 
+def kiwi_wheel():
+    """The kiwi-v10 omni wheel, measured off its STEP: a body-of-revolution disc (OD 68 / r34 for
+    axial -19.5..+8, stepping to a Ø12 hub boss, ~Ø2 shaft hole) with two staggered rings of roller
+    POCKETS cut into the rim — 4 tangent bores per ring, ring 2 rotated half a pitch (45deg), at the
+    measured pin pitch (mount_r 30). This is the swept form PLUS the roller cutouts, as an editable
+    feature tree (Sketch -> Revolution -> two PolarPocket rings).
+
+    Fidelity notes: the pockets are placed at z=-12/-1 (inside the disc) rather than the exact pin
+    rows (-15/+4) — those straddle the hub-boss step and fragment the solid; nudging them in keeps a
+    single watertight solid. Still the solid shell (~88k mm^3), not the fully-hollow real wheel
+    (~43k). OD 68 / width 39 / 8 staggered roller pockets match.
+    """
+    profile = [(1.1, -19.5), (34.0, -19.5), (34.0, 8.0), (6.0, 8.0), (6.0, 19.5), (1.1, 19.5)]
+    return IR.part(
+        "kiwi_wheel",
+        IR.sketch("section", "XZ", polys=[profile]),
+        IR.revolve("body", "section", angle=360.0),
+        IR.polar_pocket("rollers_a", radius=6.0, length=16.0, mount_r=30.0, z=-12.0, count=4, phase=0.0),
+        IR.polar_pocket("rollers_b", radius=6.0, length=16.0, mount_r=30.0, z=-1.0, count=4, phase=45.0),
+    )
+
+
 # the library's samples + this project's own, in one dict
-SAMPLES = {**IR.SAMPLES, "coupling_plate": coupling_plate}
+SAMPLES = {**IR.SAMPLES, "coupling_plate": coupling_plate, "kiwi_wheel": kiwi_wheel}
