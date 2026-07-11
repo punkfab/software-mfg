@@ -10,6 +10,7 @@ from the sibling, so upstream changes flow through automatically.
   from ir_local import IR, SAMPLES     # IR = the sibling library; SAMPLES = lib + local
 """
 
+import math
 import sys
 
 from freecad_cmd import featuretree_root
@@ -58,13 +59,33 @@ def kiwi_wheel():
     single watertight solid. Still the solid shell (~88k mm^3), not the fully-hollow real wheel
     (~43k). OD 68 / width 39 / 8 staggered roller pockets match.
     """
-    profile = [(1.1, -19.5), (34.0, -19.5), (34.0, 8.0), (6.0, 8.0), (6.0, 19.5), (1.1, 19.5)]
+    # Revolve profile (radius, axial) with a servo-side STANDOFF BOSS: the Ø22 boss (z=-27.5..-19.5)
+    # sticks out toward the servo so the roller disc (z=-19.5..+8) clears the STS3215 body; the horn
+    # seats in the boss end. Disc OD 68. (Servo-drive variant: the original outboard Ø12 hub is
+    # replaced by a back-access bore.)
+    profile = [(1.1, -27.5), (11.0, -27.5), (11.0, -19.5), (34.0, -19.5), (34.0, 8.0), (1.1, 8.0)]
+    # STS3215 horn bolt circle (ST-3215-C047): Ø14 BCD, 4× M3 clearance (Ø3.4).
+    bcr = 7.0
+    bolts = [(round(bcr * math.cos(math.radians(a)), 4), round(bcr * math.sin(math.radians(a)), 4))
+             for a in (45, 135, 225, 315)]
     return IR.part(
         "kiwi_wheel",
         IR.sketch("section", "XZ", polys=[profile]),
         IR.revolve("body", "section", angle=360.0),
         IR.polar_pocket("rollers_a", radius=6.0, length=16.0, mount_r=30.0, z=-12.0, count=4, phase=0.0),
         IR.polar_pocket("rollers_b", radius=6.0, length=16.0, mount_r=30.0, z=-1.0, count=4, phase=45.0),
+        # --- servo-horn mount on the boss end (bottom, z=-27.5) ---
+        IR.sketch("horn_recess_sk", circles=[(0, 0, 10.25)], on={"face_of": "body", "side": "bottom"}),
+        IR.pocket("horn_recess", "horn_recess_sk", through=False, length=3.0),   # Ø20.5 horn seat
+        IR.sketch("hub_bore_sk", circles=[(0, 0, 4.6)], on={"face_of": "body", "side": "bottom"}),
+        IR.pocket("hub_bore", "hub_bore_sk", through=False, length=6.0),         # Ø9.2 clears the Ø9 hub
+        # back-access counterbore (from the disc back, z=+8): drop M3 screws in here so they only span
+        # the boss to the horn — not the whole wheel
+        IR.sketch("access_sk", circles=[(0, 0, 9.0)], on={"face_of": "body", "side": "top"}),
+        IR.pocket("access", "access_sk", through=False, length=24.0),            # Ø18 down to z=-16
+        IR.sketch("horn_bolts_sk", circles=[(x, y, 1.7) for x, y in bolts],
+                  on={"face_of": "body", "side": "bottom"}),
+        IR.pocket("horn_bolts", "horn_bolts_sk", through=True),                  # 4× M3, boss->access bore
     )
 
 
