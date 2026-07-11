@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check mobile-base-mj mobile-base-mj-check feetech feetech-check scanning scanning-check omni omni-check coupling coupling-check camlock camlock-check camlock-preload camlock-preload-check lekiwi lekiwi-demo lekiwi-check tracking-check bridge bridge-check ir-solid ir-solid-check freecad freecad-roundtrip clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check mobile-base-mj mobile-base-mj-check feetech feetech-check scanning scanning-check omni omni-check coupling coupling-check camlock camlock-check camlock-preload camlock-preload-check lekiwi lekiwi-demo lekiwi-check tracking-check bridge bridge-check ir-solid ir-solid-check step-recognize step-recognize-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -20,7 +20,7 @@ view: sim ## alias for `sim` (the arm)
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
 
-check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check tracking-check interference-check layout-check mobile-base-check mobile-base-mj-check feetech-check scanning-check omni-check coupling-check camlock-check camlock-preload-check ir-solid-check assemble-check bridge-check ## run every validation gate
+check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check tracking-check interference-check layout-check mobile-base-check mobile-base-mj-check feetech-check scanning-check omni-check coupling-check camlock-check camlock-preload-check ir-solid-check step-recognize-check assemble-check bridge-check ## run every validation gate
 
 parts: ## regenerate + validate local build123d parts -> exports/
 	$(PY) scripts/check_parts.py
@@ -211,6 +211,12 @@ ir-solid: ## one IR -> a build123d SOLID via the featuretree b3d backend -> expo
 
 ir-solid-check: ## validate one IR renders a watertight build123d solid (volume-anchored to FreeCAD)
 	$(PY) scripts/ir_solid.py --check
+
+step-recognize: ## recover an IR from a STEP part (2.5D-prismatic), verified by re-emit
+	$(PY) scripts/step_recognize.py
+
+step-recognize-check: ## validate STEP->IR recognition (prismatic parts verify; out-of-scope flagged)
+	$(PY) scripts/step_recognize.py --check
 
 freecad: ## emit a FreeCAD .FCStd feature tree from the IR (needs the FreeCAD AppImage)
 	$(PY) scripts/freecad_gen.py
