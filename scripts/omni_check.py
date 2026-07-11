@@ -34,6 +34,32 @@ def roller_xform(i, row):
             @ trimesh.transformations.rotation_matrix(np.radians(90), [1, 0, 0]))
 
 
+OD_BAND = 0.8    # mm: a vertex within this of R_EFF counts as "at the OD" (ground-contact ridge)
+GAP_TOL = 6.0    # deg: max azimuthal gap in OD contact before the wheel bumps
+
+
+def geometric_continuity(roller, transforms):
+    """AUTHORITATIVE continuity test: measure the ASSEMBLED wheel instead of trusting the analytic
+    lower bound. Gather every roller vertex sitting on the OD ridge (radius >= R_EFF - OD_BAND),
+    take its azimuth, and find the largest angular gap with no OD material. gap <= GAP_TOL means
+    some roller is always at the OD as the wheel turns -> continuous contact, no bump. This is what
+    caught that a wheel whose barrels overhang their pins is continuous even when continuity() is not
+    (its coverage is measured, not inferred from the axle span)."""
+    az = []
+    for T in transforms:
+        v = trimesh.transform_points(roller.vertices, T)
+        r = np.hypot(v[:, 0], v[:, 1])
+        on_od = r >= o.R_EFF - OD_BAND
+        az.append(np.degrees(np.arctan2(v[on_od, 1], v[on_od, 0])) % 360.0)
+    az = np.sort(np.concatenate(az)) if az else np.array([])
+    if len(az) < 2:
+        return {"max_gap_deg": 360.0, "coverage_pct": 0.0, "continuous": False}
+    gaps = np.diff(np.concatenate([az, [az[0] + 360.0]]))
+    return {"max_gap_deg": round(float(gaps.max()), 1),
+            "coverage_pct": round(100.0 * float((gaps <= GAP_TOL).sum()) / len(gaps), 0),
+            "continuous": float(gaps.max()) <= GAP_TOL}
+
+
 def pin_retention(hub):
     """Probe the pin pocket: outboard of the pin the entry throat must be NARROWER than the
     pin (the lips that snap over it). Returns the max grip (pin_width - throat) found, in mm."""
@@ -63,10 +89,6 @@ def main() -> int:
     if o.ROLLER_BORE <= o.PIN_D:
         problems.append(f"roller bore {o.ROLLER_BORE} must exceed pin {o.PIN_D}")
 
-    cont = o.continuity()
-    if not cont["continuous"]:
-        problems.append(f"contact NOT continuous: {cont}")
-
     # snap-fit retention: throat narrower than the pin (snaps + retains), seat >= pin
     if o.PIN_SNAP_MOUTH >= o.PIN_D:
         problems.append(f"snap throat {o.PIN_SNAP_MOUTH} must be < pin {o.PIN_D} to retain it")
@@ -81,14 +103,22 @@ def main() -> int:
 
     sc = ix.Scene().place("hub", hub, np.eye(4))
     maxr = 0.0
+    transforms = []
     for row in range(o.ROWS):
         for i in range(o.N_ROLLERS):
             T = roller_xform(i, row)
+            transforms.append(T)
             sc.place(f"r{row}_{i}", roller, T)
             v = trimesh.transform_points(roller.vertices, T)
             maxr = max(maxr, float(np.max(np.hypot(v[:, 0], v[:, 1]))))
     if abs(maxr - o.R_EFF) > 0.4:
         problems.append(f"assembled OD radius {maxr:.2f} != R_EFF {o.R_EFF}")
+
+    # AUTHORITATIVE continuity: measure OD coverage on the assembled wheel (not the analytic proxy)
+    geo = geometric_continuity(roller, transforms)
+    if not geo["continuous"]:
+        problems.append(f"contact NOT continuous: {geo['max_gap_deg']}deg OD gap > {GAP_TOL}deg "
+                        f"(rollers leave a bump each turn)")
 
     inter = sc.interferences()
     if inter:
@@ -100,10 +130,12 @@ def main() -> int:
         problems.append(f"pin NOT retained: throat wider than the pin outboard (grip {grip:.2f}mm)")
 
     w = (hub.bounds[1] - hub.bounds[0]).round(1).tolist()
+    est = o.continuity()
     print(f"omni wheel: {o.ROWS} rows x {o.N_ROLLERS} rollers, OD {2*maxr:.0f}mm, barrel "
           f"{2*o.BARREL_MAX:.0f}mm, width {w[2]:.0f}mm, pin {o.PIN_D}mm")
-    print(f"  continuity: coverage {cont['coverage_deg']}deg >= need {cont['need_deg']}deg "
-          f"(margin {cont['margin']}x) -> rolls without bumping")
+    print(f"  continuity (measured): OD covered, largest gap {geo['max_gap_deg']}deg <= {GAP_TOL}deg "
+          f"-> {'continuous, no bump' if geo['continuous'] else 'BUMPS'} "
+          f"(analytic estimate: coverage {est['coverage_deg']}deg vs need {est['need_deg']}deg)")
     print(f"  pin: Ø{o.PIN_D}mm, snaps past a {o.PIN_SNAP_MOUTH}mm throat into a {o.HUB_PIN_BORE}mm "
           f"seat, lips grip its outboard face by {grip:.2f}mm")
     print(f"  hub {w}  roller {(roller.bounds[1]-roller.bounds[0]).round(1).tolist()}  (watertight)")

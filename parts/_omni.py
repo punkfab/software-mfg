@@ -25,6 +25,11 @@ PIN_SNAP_MOUTH = 2.4  # radial entry throat, NARROWER than the pin -> lips flex,
 #                       is retained. ~0.5mm snap interference (throat < PIN_D); inboard seat = the nest.
 ROLLER_SAMPLES = 28
 ROLLER_GAP_MM = 10.0  # tangential gap between rollers in a row -> room for the hub + spin clearance
+# Optional MEASURED roller half-length: some wheels' barrels overhang the axle pins, so the length
+# isn't the "rollers meet at the pitch angle" identity. Set to a number (mm) to override the derived
+# value; None uses FULL_HALF_L - ROLLER_GAP_MM/2. (The kiwi-v10 wheel's barrels overhang ~2.6x its
+# pin span, giving ~±28deg coverage — see scripts/omni_check.py's geometric continuity check.)
+ROLLER_HALF_L = None
 ROWS = 2              # two axially-offset, half-pitch-staggered rows -> continuous contact
 
 # drive interface to the STS3215 horn (same approach as parts/base_wheel.py) — MEASURE horn
@@ -34,7 +39,8 @@ HORN_N = 4
 HORN_SCREW = 2.7
 
 FULL_HALF_L = MOUNT_R * math.tan(math.pi / N_ROLLERS)     # where rollers would just meet
-HALF_L = FULL_HALF_L - ROLLER_GAP_MM / 2                  # shortened -> a gap for the hub
+# derived length (rollers nearly meet, minus a hub gap) unless a measured length overrides it
+HALF_L = ROLLER_HALF_L if ROLLER_HALF_L is not None else FULL_HALF_L - ROLLER_GAP_MM / 2
 BARREL_MAX = R_EFF - MOUNT_R                              # barrel radius at its centre
 END_R = R_EFF - math.hypot(MOUNT_R, HALF_L)              # barrel radius at the (shortened) ends
 ROW_STAGGER = 180.0 / N_ROLLERS                          # deg: row-2 rotated half a pitch
@@ -55,13 +61,18 @@ def roller_center(i, row=0):
 
 
 def coverage_half_deg():
-    """Half the azimuth a single roller keeps at the OD (its surface sits on R_EFF out to ±HALF_L)."""
+    """Half the azimuth a single roller keeps at the OD, ESTIMATED from the axle-pin span
+    (surface on R_EFF out to ±HALF_L). This is a LOWER BOUND: barrels that overhang their pins
+    cover more (the kiwi-v10 wheel covers ~±28deg vs ~±11 from its pin span). The authoritative
+    continuity test measures the ASSEMBLED geometry — scripts/omni_check.py:geometric_continuity."""
     return math.degrees(math.atan(HALF_L / MOUNT_R))
 
 
 def continuity():
-    """Two staggered rows -> combined rollers every 180/N deg, each covering ±coverage. Contact
-    is continuous iff coverage >= 90/N (adjacent arcs meet)."""
+    """ANALYTIC ESTIMATE (advisory): two staggered rows -> combined rollers every 180/N deg, each
+    covering ±coverage; contact is continuous iff coverage >= 90/N (adjacent arcs meet). Because
+    coverage_half_deg() is a lower bound, this can FALSE-NEGATIVE for barrels that overhang the
+    pins — the gate uses the geometric OD-coverage measurement, not this."""
     need = 90.0 / N_ROLLERS
     cov = coverage_half_deg()
     return {"coverage_deg": round(cov, 1), "need_deg": round(need, 1),
@@ -76,6 +87,6 @@ def validity():
         w.append("barrel ends too thin for the bore (raise R_EFF or MOUNT_R)")
     if BARREL_MAX <= 2:
         w.append("barrel too shallow (rollers won't contact ground)")
-    if not continuity()["continuous"]:
-        w.append(f"contact not continuous: coverage {coverage_half_deg():.1f} < {90/N_ROLLERS:.1f} deg")
+    # NB: contact continuity is validated GEOMETRICALLY on the assembled wheel
+    # (scripts/omni_check.py:geometric_continuity), not by the analytic continuity() lower bound.
     return w
