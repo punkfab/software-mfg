@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check mobile-base-mj mobile-base-mj-check feetech feetech-check scanning scanning-check omni omni-check omni-drive omni-drive-check omni-set-ids omni-test omni-teleop coupling coupling-check camlock camlock-check camlock-preload camlock-preload-check lekiwi lekiwi-demo lekiwi-check tracking-check bridge bridge-check ir-solid ir-solid-check step-recognize step-recognize-check freecad freecad-roundtrip clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check mobile-base-mj mobile-base-mj-check feetech feetech-check scanning scanning-check omni omni-check omni-drive omni-drive-check omni-set-ids omni-test omni-teleop reach-plan reach-plan-check servo-read coupling coupling-check camlock camlock-check camlock-preload camlock-preload-check lekiwi lekiwi-demo lekiwi-check reach-sim tracking-check bridge bridge-check ir-solid ir-solid-check step-recognize step-recognize-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -20,7 +20,7 @@ view: sim ## alias for `sim` (the arm)
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
 
-check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check tracking-check interference-check layout-check mobile-base-check mobile-base-mj-check feetech-check scanning-check omni-check omni-drive-check coupling-check camlock-check camlock-preload-check ir-solid-check step-recognize-check assemble-check bridge-check ## run every validation gate
+check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check tracking-check interference-check layout-check mobile-base-check mobile-base-mj-check feetech-check scanning-check omni-check omni-drive-check reach-plan-check coupling-check camlock-check camlock-preload-check ir-solid-check step-recognize-check assemble-check bridge-check ## run every validation gate
 
 parts: ## regenerate + validate local build123d parts -> exports/
 	$(PY) scripts/check_parts.py
@@ -172,6 +172,7 @@ omni-drive: ## dry-run the base drive: print wheel commands for the scripted tes
 	$(PY) bridge/omni_drive.py --test all --dry-run
 
 PORT ?= /dev/ttyACM0
+ID ?= 6
 omni-set-ids: ## provision the 3 wheel servos to IDs 16,17,18 + wheel mode (needs the bus; run via `!`)
 	$(PY) bridge/omni_drive.py --set-ids --port $(PORT)
 
@@ -180,6 +181,15 @@ omni-test: ## scripted drive test on the real base (forward/strafe/rotate/box/fi
 
 omni-teleop: ## HOLD-to-drive WASD over the Feetech bus, dead-man stop on release (run in a REAL terminal)
 	DISPLAY=$(DISPLAY) $(PY) bridge/omni_drive.py --teleop --port $(PORT)
+
+reach-plan: ## render the merged base+arm reach plan (where to park + reach) -> build/reach_plan.png
+	$(PY) sim/reach_plan.py --demo
+
+reach-plan-check: ## validate the base-placement solver (parks clear of the obstacle, reaches or flags)
+	$(PY) sim/reach_plan.py --selftest
+
+servo-read: ## read a servo's shaft angle as a sensor/knob (torque off; ID?=6; run via `!`)
+	$(PY) bridge/servo_read.py --id $(ID) --port $(PORT)
 
 coupling: ## build the tool-changer coupling faces + show the hold/registration statics
 	$(PY) parts/coupling_arm_side.py
@@ -212,6 +222,9 @@ lekiwi-demo: ## headless: LeKiwi drives holonomically + arm reaches -> build/lek
 
 lekiwi-check: ## validate the exact LeKiwi sim (loads, stands, drives holonomically, upright)
 	$(PY) sim/lekiwi_sim.py --selftest
+
+reach-sim: ## MuJoCo: LeKiwi drives up to a printer at the safe standoff (reach_plan) + reaches -> build/lekiwi/reach.gif
+	MUJOCO_GL=osmesa $(PY) sim/lekiwi_sim.py --reach
 
 tracking-check: ## validate CAD-referenced pose tracking (staleness + verify vs nominal)
 	$(PY) scripts/tracking_check.py

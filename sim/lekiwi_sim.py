@@ -25,7 +25,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-_MODE = "demo" if "--demo" in sys.argv else "selftest" if "--selftest" in sys.argv else "interactive"
+_MODE = ("reach" if "--reach" in sys.argv else "demo" if "--demo" in sys.argv
+         else "selftest" if "--selftest" in sys.argv else "interactive")
 os.environ.setdefault("MUJOCO_GL", "glfw" if _MODE == "interactive" else "osmesa")
 
 import numpy as np  # noqa: E402
@@ -70,7 +71,7 @@ def prepare_meshes(force=False):
     return urdf
 
 
-def build_model(p: Params):
+def build_model(p: Params, obstacle=None):
     urdf = prepare_meshes()
     spec = mujoco.MjSpec.from_file(str(urdf))
     spec.option.timestep = p.dt
@@ -79,6 +80,9 @@ def build_model(p: Params):
     fl = wb.add_geom(); fl.name = "floor"; fl.type = mujoco.mjtGeom.mjGEOM_PLANE
     fl.size = [0, 0, 0.05]; fl.rgba = [0.3, 0.32, 0.36, 1]; fl.friction = [p.wheel_mu, 0.02, 0.001]
     wb.add_light(pos=[0.3, -0.3, 1.0], dir=[-0.3, 0.3, -1])
+    if obstacle:                                           # a static box (e.g. a printer) to drive up to
+        g = wb.add_geom(); g.name = "obstacle"; g.type = mujoco.mjtGeom.mjGEOM_BOX
+        g.size = list(obstacle["half"]); g.pos = list(obstacle["pos"]); g.rgba = [0.7, 0.72, 0.76, 1]
     base = spec.body("base_plate_layer1-v5")
     base.add_freejoint()
     base.pos = [0, 0, 0.13]
@@ -124,8 +128,8 @@ def tilt_deg(model, data, bid):
     return float(np.degrees(np.arccos(np.clip(data.xmat[bid].reshape(3, 3)[2, 2], -1, 1))))
 
 
-def run(p: Params, scenario, steps, render=False, cam=None):
-    model = build_model(p)
+def run(p: Params, scenario, steps, render=False, cam=None, obstacle=None):
+    model = build_model(p, obstacle=obstacle)
     data = mujoco.MjData(model)
     bid, base_dof, wheel_dofs = _ids(model)
     for _ in range(int(p.settle_s / p.dt)):                    # settle onto the wheels
@@ -201,6 +205,42 @@ def demo():
           f"-> {BUILD/'lekiwi.gif'} ({len(frames)} frames)")
 
 
+def reach():
+    """Drive-up-and-reach: reach_plan finds the closest SAFE standoff for a printer pick, the base
+    drives there (clearing the printer box), then the arm reaches out over the bed. -> build/lekiwi/reach.gif"""
+    import reach_plan as rp
+    target, printer, base_m, arm_m = rp.printer_pick()
+    pl = rp.plan(target, printer, base_m, arm_m)
+    if not pl.reachable:
+        print("plan infeasible:", pl.reason); return 1
+    bx, by, byaw = pl.base_pose
+    obstacle = {"pos": [printer.cx, printer.cy, printer.top_z / 2],
+                "half": [printer.hx, printer.hy, printer.top_z / 2]}
+    drive_T = 4.0
+
+    def scenario(t):
+        if t < drive_T:                                    # ramp the base pose origin -> standoff
+            f = t / drive_T
+            return (bx * f, by * f, byaw * f), [0.0] * 6
+        r = min(1.0, (t - drive_T) / 2.5)                  # then extend the arm out over the bed
+        return (bx, by, byaw), [0.0, -0.7 * r, 0.9 * r, -0.4 * r, 0.0, 0.0]
+
+    p = Params()
+    cam = mujoco.MjvCamera(); cam.azimuth, cam.elevation, cam.distance = 140, -22, 1.7
+    cam.lookat = [0.5 * (bx + printer.cx), 0.5 * (by + printer.cy), 0.2]
+    model, data, log, frames = run(p, scenario, steps=int(7.5 / p.dt), render=True, cam=cam,
+                                   obstacle=obstacle)
+    import imageio
+    BUILD.mkdir(parents=True, exist_ok=True)
+    imageio.mimsave(str(BUILD / "reach.gif"), frames, fps=30)
+    xf, yf = log["x"][-1], log["y"][-1]
+    print(f"planned standoff ({bx:.2f},{by:.2f}) yaw {math.degrees(byaw):.0f}° -> reached "
+          f"({xf:.2f},{yf:.2f}), err {math.hypot(xf-bx, yf-by)*1000:.0f} mm; printer clearance "
+          f"{pl.footprint_clearance_m*1000:.0f} mm; peak tilt {max(log['tilt']):.1f}° -> "
+          f"{BUILD/'reach.gif'} ({len(frames)} frames)")
+    return 0
+
+
 def interactive():
     from mujoco import viewer         # bind `viewer` (not `mujoco`) so the global stays visible
     p = Params()
@@ -210,4 +250,5 @@ def interactive():
 
 
 if __name__ == "__main__":
-    sys.exit({"selftest": selftest, "demo": demo, "interactive": interactive}[_MODE]() or 0)
+    sys.exit({"selftest": selftest, "demo": demo, "interactive": interactive,
+              "reach": reach}[_MODE]() or 0)
