@@ -32,6 +32,7 @@ import numpy as np  # noqa: E402
 import mujoco  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))                                 # so bridge/ (shared kinematics) imports
 LEKIWI = Path("/home/dan/sandbox/thirdparty/LeKiwi/URDF")     # read-only thirdparty checkout
 BUILD = ROOT / "build" / "lekiwi"
 WHEEL_JOINTS = ["ST3215_Servo_Motor-v1-2_Revolute-60",        # the 3 drive wheels (from the URDF)
@@ -94,12 +95,21 @@ def build_model(p: Params):
 
 # --- LeKiwi holonomic kinematics: body (vx, vy, wz) -> 3 wheel angular speeds (rad/s) --------
 def body_to_wheels(vx, vy, wz, p: Params, angles_deg=(300.0, 180.0, 60.0)):
-    out = []
-    for b in angles_deg:
-        b = math.radians(b)
-        v_wheel = -math.sin(b) * vx + math.cos(b) * vy + p.base_r * wz   # wheel rim linear speed
-        out.append(v_wheel / p.wheel_r)
-    return out
+    """Holonomic inverse kinematics, DELEGATED to bridge/omni_kinematics so the sim and the real
+    hardware driver share one algorithm (sim-is-a-cache-of-reality). Falls back to the identical
+    inline formula if the shared module isn't importable, so the sim stays self-contained."""
+    try:
+        from bridge.omni_kinematics import OmniGeometry, body_to_wheels as _b2w
+        geo = OmniGeometry(wheel_r_mm=p.wheel_r * 1000, base_r_mm=p.base_r * 1000,
+                           azimuths_deg=tuple(angles_deg))
+        return list(_b2w(geo, vx, vy, wz))
+    except Exception:
+        out = []
+        for b in angles_deg:
+            b = math.radians(b)
+            v_wheel = -math.sin(b) * vx + math.cos(b) * vy + p.base_r * wz   # wheel rim linear speed
+            out.append(v_wheel / p.wheel_r)
+        return out
 
 
 def _ids(model):

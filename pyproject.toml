@@ -14,5 +14,10 @@ dependencies = [
     "rich_click",      # partcad import dep, not pulled in automatically by its wheel
 ]
 
+[project.optional-dependencies]
+# Real-hardware drive over the Feetech bus (bridge/omni_drive.py). Kinematics + the check gate are
+# hardware-free; only talking to real STS3215 wheel servos needs the serial port. `uv sync --extra hardware`.
+hardware = ["pyserial>=3.5"]
+
 [tool.uv]
 package = false

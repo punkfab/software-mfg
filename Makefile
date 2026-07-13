@@ -6,7 +6,7 @@
 PY ?= python3
 DISPLAY ?= :0
 
-.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check mobile-base-mj mobile-base-mj-check feetech feetech-check scanning scanning-check omni omni-check coupling coupling-check camlock camlock-check camlock-preload camlock-preload-check lekiwi lekiwi-demo lekiwi-check tracking-check bridge bridge-check ir-solid ir-solid-check step-recognize step-recognize-check freecad freecad-roundtrip clean
+.PHONY: help sim printer-sim view render check parts cells so101 workcell-check workcell toolchange-check toolchange eject-check eject printer-cell bend bend-check cell-handoff cell-handoff-check press press-check opgraph opgraph-run opgraph-check pipeline pipeline-check calib calib-check foil-former foil-former-check foil-lom foil-lom-check glue glue-check coord coord-check assemble assemble-check interference interference-check layout layout-check mobile-base mobile-base-check mobile-base-mj mobile-base-mj-check feetech feetech-check scanning scanning-check omni omni-check omni-drive omni-drive-check omni-set-ids omni-test omni-teleop coupling coupling-check camlock camlock-check camlock-preload camlock-preload-check lekiwi lekiwi-demo lekiwi-check tracking-check bridge bridge-check ir-solid ir-solid-check step-recognize step-recognize-check freecad freecad-roundtrip clean
 .DEFAULT_GOAL := help
 
 sim: ## live viewer: the SO-101 ARM scene (needs a display; run via `!`)
@@ -20,7 +20,7 @@ view: sim ## alias for `sim` (the arm)
 render: ## headless: render the scripted SO-101 motion -> exports/renders/ (no display)
 	MUJOCO_GL=osmesa $(PY) scripts/so101_render.py
 
-check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check tracking-check interference-check layout-check mobile-base-check mobile-base-mj-check feetech-check scanning-check omni-check coupling-check camlock-check camlock-preload-check ir-solid-check step-recognize-check assemble-check bridge-check ## run every validation gate
+check: parts cells so101 workcell-check toolchange-check eject-check bend-check cell-handoff-check press-check opgraph-check pipeline-check calib-check foil-former-check foil-lom-check glue-check coord-check tracking-check interference-check layout-check mobile-base-check mobile-base-mj-check feetech-check scanning-check omni-check omni-drive-check coupling-check camlock-check camlock-preload-check ir-solid-check step-recognize-check assemble-check bridge-check ## run every validation gate
 
 parts: ## regenerate + validate local build123d parts -> exports/
 	$(PY) scripts/check_parts.py
@@ -164,6 +164,22 @@ omni: ## build the omni wheel STLs (roller + hub) + the assembly -> build/omni_*
 
 omni-check: ## validate the reverse-engineered omni wheel (assembles, rollers spin free, OD=R_EFF)
 	$(PY) scripts/omni_check.py
+
+omni-drive-check: ## validate the 3-omni holonomic kinematics + Feetech command path (no hardware)
+	$(PY) scripts/omni_drive_check.py
+
+omni-drive: ## dry-run the base drive: print wheel commands for the scripted test patterns (no hardware)
+	$(PY) bridge/omni_drive.py --test all --dry-run
+
+PORT ?= /dev/ttyACM0
+omni-set-ids: ## provision the 3 wheel servos to IDs 16,17,18 + wheel mode (needs the bus; run via `!`)
+	$(PY) bridge/omni_drive.py --set-ids --port $(PORT)
+
+omni-test: ## scripted drive test on the real base (forward/strafe/rotate/box/figure8; run via `!`)
+	$(PY) bridge/omni_drive.py --test all --port $(PORT)
+
+omni-teleop: ## HOLD-to-drive WASD over the Feetech bus, dead-man stop on release (run in a REAL terminal)
+	DISPLAY=$(DISPLAY) $(PY) bridge/omni_drive.py --teleop --port $(PORT)
 
 coupling: ## build the tool-changer coupling faces + show the hold/registration statics
 	$(PY) parts/coupling_arm_side.py

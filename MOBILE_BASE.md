@@ -170,3 +170,41 @@ Extrusion/hardware: **Misumi**, **McMaster**. IMU/encoders/MCU: **Adafruit**, **
 4. Drive to the printer via `station.py` (collision-checked route + `stage_into_envelope`),
    lock (foot/brake), run the extraction reach, verify the part is grasped and clears the chamber.
 5. Compare predicted vs. measured hold + tip margin; log the sim-to-real gap.
+
+## 3-omni holonomic drive — control & provisioning (when you graduate from diff2)
+
+The `omni_diff` base (3 Ø70 omni wheels, `parts/_omni.py`) is holonomic AND locks laterally. Its
+drive is one function — the inverse kinematics — plus the Feetech bus you already use for the arm.
+
+**Kinematics** (`bridge/omni_kinematics.py`, shared with `sim/lekiwi_sim.py` so sim and robot can't
+drift). Frame: body **+x forward, +y left, +z up**, yaw CCW+. Wheel `i` at azimuth `φ_i` (CCW from
++x), radius `base_r`, wheel radius `r`:
+
+```
+v_i     = -sin(φ_i)·vx + cos(φ_i)·vy + base_r·wz     # wheel-rim linear speed (m/s)
+ω_i     = spin_i · v_i / r                            # wheel angular speed (rad/s)  -> Goal_Velocity
+```
+
+Forward (odometry) is the 3×3 inverse. Defaults: `r=35 mm` (Ø70), `base_r=110 mm`, azimuths
+`(60,180,300)`, `spin=(1,1,1)`. **MEASURE `base_r` + the azimuths on the real plate**, and flip a
+`spin_i` if a commanded "forward" reverses that wheel. `wheels_to_raw` scales all three down together
+if any exceeds `--max-raw`, so a holonomic move stays straight (just slower) instead of skewing.
+
+**ID plan:** wheel motors = **16, 17, 18**, leaving **0–15** for the SO-101 arm axes, effectors, and
+the tool changer — all one Feetech bus, one protocol. Factory servos ship as ID 1, so provision them
+**one at a time** to avoid a collision.
+
+```bash
+python bridge/omni_drive.py --set-ids            # guided: connect each wheel alone -> 16/17/18 + wheel mode
+python bridge/omni_drive.py --scan               # confirm ids on the bus
+python bridge/omni_drive.py --test all           # scripted: forward / strafe / rotate / box / figure8
+python bridge/omni_drive.py --teleop             # WASD drive (Q/E rotate, space stop, +/- speed)
+python bridge/omni_drive.py --test all --dry-run # no hardware: just print the wheel commands
+# make omni-set-ids | omni-teleop | omni-drive (dry) ;  make omni-drive-check (hardware-free gate)
+```
+
+`bridge/feetech_bus.py` points the SAME codec as `sim/feetech_protocol.py` at a real half-duplex
+TTL port (1 Mbps) — ID/mode are EEPROM writes (unlock `Lock=0` → write → relock), velocity is a RAM
+`Goal_Velocity` sync-write (2-byte sign-magnitude). Needs `pyserial` (`uv sync --extra hardware`); the
+kinematics and the `omni-drive-check` gate are hardware-free. Note: after `--set-ids`, if a wheel
+doesn't spin, power-cycle it (some firmware latches the mode change on reset).
