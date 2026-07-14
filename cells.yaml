@@ -45,3 +45,16 @@ cells:
     urdf: urdf/so101_new_calib.urdf       # from ./fetch_urdf.sh (gitignored in the cell)
     frame: gripper_frame_link             # the end-effector frame (URDF_TARGET_FRAME)
     note: real arms + Placo kinematics, composed by reference (read-only, never forked)
+
+  # robot-locomotion is the LOCOMOTION DESIGN SPOKE: the punkfab source of truth for how robots get
+  # around (the omni wheel + 3-omni holonomic drive today; legs next). Unlike a part cell it emits no
+  # geometry via sync_cells.py — its modules run under software-mfg's OWN interpreter (same build123d),
+  # so they are composed by SYMLINK, never forked: parts/{_omni,omni_roller,omni_hub}.py and
+  # bridge/{omni_kinematics,omni_drive}.py in THIS repo are symlinks into the spoke (the spoke stays
+  # the single source of truth; edits land there). The shared utils the spoke depends on
+  # (sim/interference.py, sim/feetech_protocol.py, bridge/feetech_bus.py) stay hub-owned here.
+  # Clone the spoke at the path below: git clone git@github.com:dnewcome/robot-locomotion.git
+  robot-locomotion:
+    path: ../../punkfab/robot-locomotion   # sibling design spoke (under punkfab/, not dnewcome/)
+    syspath: [parts, bridge]               # so `from _omni import` / `import bridge.omni_kinematics` resolve
+    note: omni wheel + 3-omni kinematics — source of truth, symlinked in, never forked
