@@ -53,7 +53,7 @@ cells:
   # bridge/{omni_kinematics,omni_drive}.py in THIS repo are symlinks into the spoke (the spoke stays
   # the single source of truth; edits land there). The shared utils the spoke depends on
   # (sim/interference.py, sim/feetech_protocol.py, bridge/feetech_bus.py) stay hub-owned here.
-  # Clone the spoke at the path below: git clone git@github.com:dnewcome/robot-locomotion.git
+  # Clone the spoke at the path below: git clone git@github.com:punkfab/robot-locomotion.git
   robot-locomotion:
     path: ../../punkfab/robot-locomotion   # sibling design spoke (under punkfab/, not dnewcome/)
     syspath: [parts, bridge]               # so `from _omni import` / `import bridge.omni_kinematics` resolve
