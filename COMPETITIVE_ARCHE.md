@@ -113,3 +113,22 @@ specifically, who owns no fabrication at all.**
    supply chain Scrapyard rides on). Own the fabrication story.
 4. **Watch Arche** (X @archedotco, waitlist) for a funding announcement or a named team — the one open
    question free sources can't close.
+
+---
+
+## Watchlist — adjacent AI-CAD players (tracked, not full-scanned)
+
+The "vertical AI-native CAD" category is filling in across **both geometry kernels and domains** at
+once — the generation front-end is commoditizing on every axis. This *reinforces* the verdict above:
+cede CAD generation, win downstream (owned cells + calibration + verified assembly).
+
+| Player | What / kernel / domain | Distance from our north star | Notes (as of scan) |
+|---|---|---|---|
+| **Arche — "Smith"** | code-CAD (Python), mechanical; +sim +DFM +Scrapyard | **CLOSEST — thesis-twin** | full scan above; owns no fabrication |
+| **Formas — "Cartesian"** (formas.ai) | **B-rep/NURBS**, arch + product; "Anything to 3D"; Rhino .3DM / SketchUp .SKP, IFC planned | **FURTHEST** — pure geometry gen, **no sim/fab/assembly/calibration** | closest thing to a **featuretree** competitor (editable B-rep, "no mesh approximation"). Preview 2026-09-18, waitlist. Team/funding undisclosed. [verified — formas.ai/cartesian] |
+| **Embedr** (embedr.app) | code, **embedded/PCB + firmware**; AI-native Arduino IDE, KiCad-native, datasheet→knowledge agent | adjacent — competes only with the **PCB/firmware corner** (pcb-layout / circuit-sim), not the mechanical core | potential build-vs-buy for the firmware leg, not a head-on rival. [verified — embedr.app] |
+
+**Category takeaway:** three entrants, three different geometry representations (code / B-rep / code)
+and three domains (mechanical / arch+product / embedded). Expect more (RF, optics, fluidics). Our
+domain-knowledge layer is *manufacturing-process + calibrated reality*, which is harder to replicate
+than a geometry kernel or a datasheet corpus — that is where the defensibility lives.
